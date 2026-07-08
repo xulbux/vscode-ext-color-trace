@@ -14,7 +14,7 @@
   },
   "bugs": { "url": "https://github.com/xulbux/vscode-ext-color-trace/issues" },
   "sponsor": { "url": "https://github.com/sponsors/xulbux" },
-  "engines": { "vscode": "^1.87.0" },
+  "engines": { "vscode": "^1.128.0" },
   "categories": ["Visualization", "Other"],
   "keywords": [
     "accessible",
@@ -25,25 +25,6 @@
     "readable",
     "xulbux"
   ],
-  "contributes": {
-    "themes": [
-      {
-        "label": "XulbuX PRO",
-        "uiTheme": "vs-dark",
-        "path": "./theme/xulbux-pro.json"
-      },
-      {
-        "label": "XulbuX PRO Legacy",
-        "uiTheme": "vs-dark",
-        "path": "./theme/xulbux-pro-legacy.json"
-      },
-      {
-        "label": "XulbuX VaporWave",
-        "uiTheme": "vs-dark",
-        "path": "./theme/xulbux-vaporwave.json"
-      }
-    ]
-  },
   "__metadata": {
     "id": "39cf6240-75d9-4602-97ff-1c0b1e355e94",
     "publisherId": "77f5e7c0-42af-4d80-ab24-d9657bfebe93",
