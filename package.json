@@ -1,6 +1,6 @@
 {
   "name": "color-trace",
-  "version": "1.4.1",
+  "version": "1.0.0",
   "displayName": "Color Trace",
   "description": "Fast, readable web color highlighting in the editor.",
   "icon": "./assets/icon.png",
