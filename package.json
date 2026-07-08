@@ -1,21 +1,12 @@
 {
   "name": "color-trace",
-  "version": "1.0.0",
   "displayName": "Color Trace",
+  "version": "1.0.0",
   "description": "Fast, readable web color highlighting in the editor.",
-  "icon": "./assets/icon.png",
-  "author": { "name": "XulbuX", "email": "xulbux.real@gmail.com" },
-  "publisher": "xulbux",
-  "maintainers": ["XulbuX <xulbux.real@gmail.com>"],
-	"license": "MIT",
-  "repository": {
-    "url": "https://github.com/xulbux/vscode-ext-color-trace",
-    "type": "git"
-  },
-  "bugs": { "url": "https://github.com/xulbux/vscode-ext-color-trace/issues" },
-  "sponsor": { "url": "https://github.com/sponsors/xulbux" },
-  "engines": { "vscode": "^1.128.0" },
-  "categories": ["Visualization", "Other"],
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
   "keywords": [
     "accessible",
     "color",
@@ -25,6 +16,79 @@
     "readable",
     "xulbux"
   ],
+  "bugs": {
+    "url": "https://github.com/xulbux/vscode-ext-color-trace/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "XulbuX",
+    "email": "xulbux.real@gmail.com"
+  },
+  "maintainers": [
+    "XulbuX <xulbux.real@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xulbux/vscode-ext-color-trace"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/xulbux"
+  },
+  "publisher": "xulbux",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "node esbuild.js",
+    "esbuild-watch": "node esbuild.js --watch",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint --fix",
+    "lint:check": "oxlint",
+    "type-check": "tsc --noEmit",
+    "vscode:prepublish": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@types/vscode": "^1.125.0",
+    "esbuild": "^0.25.0",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.71.0",
+    "typescript": "^5.9.3"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Color Trace",
+      "properties": {
+        "colorTrace.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable color highlighting."
+        },
+        "colorTrace.editorBackground": {
+          "type": "string",
+          "default": "",
+          "description": "Override the editor background color used for transparent color readability calculations. Leave empty to auto-detect. Accepts any hex color (e.g. `#1E1E1E`)."
+        },
+        "colorTrace.highlightNamedColors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight named CSS colors (e.g. `red`, `tomato`, …) in CSS-like languages."
+        },
+        "colorTrace.borderRadius": {
+          "type": "string",
+          "default": "0.25em",
+          "description": "Border radius for color highlights."
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "icon": "./assets/icon.png",
+  "engines": {
+    "vscode": "^1.128.0"
+  },
   "__metadata": {
     "id": "39cf6240-75d9-4602-97ff-1c0b1e355e94",
     "publisherId": "77f5e7c0-42af-4d80-ab24-d9657bfebe93",

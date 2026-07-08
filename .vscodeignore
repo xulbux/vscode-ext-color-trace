@@ -1,0 +1,14 @@
+!dist/**
+.github/
+.vscode/
+node_modules/
+src/
+
+.gitignore
+.oxfmtrc.json
+.oxlintrc.json
+*.ts
+esbuild.js
+pnpm-lock.yaml
+pnpm-workspace.yaml
+tsconfig.json
