@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { getProviderColors } from '@/providers/documentColorBridge';
 import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
-import { extractColors } from './colorParser';
+import { extractColors, hasOverlap } from './colorParser';
 import { applyDecorations } from './decorationManager';
 import { clearVariablesForUri } from './variableManager';
 
@@ -17,13 +17,6 @@ import { clearVariablesForUri } from './variableManager';
 const cache = new Map<string, CacheEntry>();
 
 // -------------------------------------- INTERNALS --------------------------------------
-
-/**
- * Stable string key for a range (for deduplication).
- */
-function rangeKey(range: vscode.Range): string {
-  return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
-}
 
 /**
  * Merge regex-based matches with provider matches.
@@ -35,65 +28,57 @@ function mergeMatches(
   providerMatches: ColorMatch[],
   options: { doc: vscode.TextDocument; rangeOffset: number; scanRange: vscode.Range }
 ): { range: vscode.Range; color: ColorData }[] {
-  const results: { range: vscode.Range; color: ColorData }[] = [];
-  const covered = new Set<string>();
-  const consumedProviders = new Set<number>();
+  // Provider matches from VS Code might not be strictly sorted. Sort them.
+  providerMatches.sort((a, b) => a.startOffset - b.startOffset);
 
-  // [1] Regex matches first. They have highly accurate ranges (e.g. strict hex bounds).
-  // If they overlap with a provider match, we use OUR precise range, but inherit
-  for (const match of regexMatches) {
-    const finalColor = match.color;
+  // Filter out any provider matches that overlap with our regex matches
+  // (since regex matches have absolute priority).
+  const filteredProviders = providerMatches.filter(
+    (pm) => !hasOverlap(regexMatches, pm.startOffset, pm.endOffset)
+  );
 
-    // Check for overlap with any provider match.
-    // We trust our own regex parsers and variable cache more than potentially buggy
-    // language servers (which sometimes return dummy colors like yellow for unresolved vars).
-    const absStart = match.startOffset;
-    const absEnd = match.endOffset;
-    const pmIndex = providerMatches.findIndex(
-      (p) => absStart < p.endOffset && absEnd > p.startOffset
-    );
-
-    if (pmIndex !== -1) {
-      // Discard the provider match since we already handled this color perfectly.
-      consumedProviders.add(pmIndex);
-    }
-
-    const range = new vscode.Range(
-      options.doc.positionAt(absStart),
-      options.doc.positionAt(absEnd)
-    );
-
-    if (options.scanRange.contains(range)) {
-      const key = rangeKey(range);
-      if (!covered.has(key)) {
-        covered.add(key);
-        results.push({ color: finalColor, range });
-      }
+  // Filter overlaps within the provider matches themselves, just in case
+  // the language server returned overlapping/duplicate ranges.
+  const finalProviders: ColorMatch[] = [];
+  let lastEnd = -1;
+  for (const pm of filteredProviders) {
+    if (pm.startOffset >= lastEnd) {
+      finalProviders.push(pm);
+      lastEnd = pm.endOffset;
     }
   }
 
-  // [2] Add any provider matches that didn't overlap with our regexes.
-  for (const [i, pm] of providerMatches.entries()) {
-    if (!consumedProviders.has(i)) {
-      const range = new vscode.Range(
-        options.doc.positionAt(pm.startOffset),
-        options.doc.positionAt(pm.endOffset)
-      );
+  // Linear merge `regexMatches` (which are already sorted and non-overlapping) and `finalProviders`.
+  const merged: ColorMatch[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < regexMatches.length && j < finalProviders.length) {
+    if (regexMatches[i].startOffset <= finalProviders[j].startOffset) {
+      merged.push(regexMatches[i]);
+      i += 1;
+    } else {
+      merged.push(finalProviders[j]);
+      j += 1;
+    }
+  }
+  while (i < regexMatches.length) {
+    merged.push(regexMatches[i]);
+    i += 1;
+  }
+  while (j < finalProviders.length) {
+    merged.push(finalProviders[j]);
+    j += 1;
+  }
 
-      if (options.scanRange.contains(range)) {
-        const key = rangeKey(range);
-        if (!covered.has(key)) {
-          // Check for partial overlap with any existing result.
-          const overlaps = results.some(
-            (result) =>
-              range.start.isBefore(result.range.end) && range.end.isAfter(result.range.start)
-          );
-          if (!overlaps) {
-            covered.add(key);
-            results.push({ color: pm.color, range });
-          }
-        }
-      }
+  // Convert to VS Code ranges and filter by `options.scanRange`.
+  const results: { range: vscode.Range; color: ColorData }[] = [];
+  for (const match of merged) {
+    const range = new vscode.Range(
+      options.doc.positionAt(match.startOffset),
+      options.doc.positionAt(match.endOffset)
+    );
+    if (options.scanRange.contains(range)) {
+      results.push({ color: match.color, range });
     }
   }
 
@@ -135,7 +120,8 @@ export async function scanEditor(
 
   // [1] Determine the scan range (entire document).
   const text = doc.getText();
-  if (text.length === 0) {
+  // Safeguard: Do not scan massive minified files to prevent extension host freezing.
+  if (text.length === 0 || text.length > 500_000) {
     return;
   }
 

@@ -28,9 +28,67 @@ const CLASS_RE = new RegExp(
 
 // --------------------------------------- HELPERS ---------------------------------------
 
-/** Check if a range overlaps with any existing match. */
-function rangeOverlaps(matches: ColorMatch[], start: number, end: number): boolean {
-  return matches.some((m) => start < m.endOffset && end > m.startOffset);
+export function hasOverlap(sortedMatches: ColorMatch[], start: number, end: number): boolean {
+  let left = 0;
+  let right = sortedMatches.length - 1;
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const iv = sortedMatches[mid];
+    if (end <= iv.startOffset) {
+      right = mid - 1;
+    } else if (start >= iv.endOffset) {
+      left = mid + 1;
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
+function mergeNonOverlapping(target: ColorMatch[], newMatches: ColorMatch[]): ColorMatch[] {
+  // `target` and `newMatches` are assumed to be sorted by `startOffset`.
+  const filtered = newMatches.filter((m) => !hasOverlap(target, m.startOffset, m.endOffset));
+  const merged: ColorMatch[] = [];
+  let i = 0;
+  let j = 0;
+  while (i < target.length && j < filtered.length) {
+    if (target[i].startOffset <= filtered[j].startOffset) {
+      merged.push(target[i]);
+      i += 1;
+    } else {
+      merged.push(filtered[j]);
+      j += 1;
+    }
+  }
+  while (i < target.length) {
+    merged.push(target[i]);
+    i += 1;
+  }
+  while (j < filtered.length) {
+    merged.push(filtered[j]);
+    j += 1;
+  }
+  return merged;
+}
+
+const regexCache = new Map<string, RegExp>();
+function getRegex(options: DocumentResolvedConfig): RegExp {
+  const key = `${options.matchRgbWithNoFunction}-${options.matchHslWithNoFunction}-${options.useARGB}`;
+  let colorRe = regexCache.get(key);
+  if (!colorRe) {
+    const patterns: string[] = [];
+    for (const strategy of strategies) {
+      if (strategy.getPatterns) {
+        patterns.push(...strategy.getPatterns(options));
+      } else {
+        patterns.push(strategy.pattern);
+      }
+    }
+    colorRe = new RegExp(`(${patterns.join('|')})`, 'gi');
+    regexCache.set(key, colorRe);
+  }
+  colorRe.lastIndex = 0;
+  return colorRe;
 }
 
 /** Check if a word is adjacent to a hyphen (part of a utility class like `text-red`). */
@@ -40,10 +98,11 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 
 // -------------------------------------- EXTRACTORS -------------------------------------
 
-function extractVariableUsages(text: string, results: ColorMatch[]): void {
+function extractVariableUsages(text: string): ColorMatch[] {
   if (!text.includes('var(')) {
-    return;
+    return [];
   }
+  const results: ColorMatch[] = [];
   for (const varMatch of text.matchAll(VAR_USE_RE)) {
     const varName = varMatch.groups?.name;
     if (varName) {
@@ -52,17 +111,16 @@ function extractVariableUsages(text: string, results: ColorMatch[]): void {
         const offset = varMatch.index + varMatch[0].indexOf(varName);
         const end = offset + varName.length;
 
-        if (!rangeOverlaps(results, offset, end)) {
-          results.push({
-            color: colorData,
-            endOffset: end,
-            originalText: varName,
-            startOffset: offset,
-          });
-        }
+        results.push({
+          color: colorData,
+          endOffset: end,
+          originalText: varName,
+          startOffset: offset,
+        });
       }
     }
   }
+  return results;
 }
 
 /** Check if a Tailwind class is properly bounded (not part of a CSS selector or longer word). */
@@ -72,11 +130,12 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
   }
   const prevChar = text[index - 1];
 
-  // Invalid boundaries: letter, number, underscore, hyphen, dot (CSS class), hash (CSS ID)
+  // Invalid boundaries: letter, number, underscore, hyphen, dot (CSS class), hash (CSS ID).
   return !/[a-zA-Z0-9_\-.#]/.test(prevChar);
 }
 
-function extractTailwindClasses(text: string, results: ColorMatch[]): void {
+function extractTailwindClasses(text: string): ColorMatch[] {
+  const results: ColorMatch[] = [];
   for (const classMatch of text.matchAll(CLASS_RE)) {
     if (isValidTailwindBoundary(text, classMatch.index)) {
       const prefix = classMatch.groups?.prefix;
@@ -111,50 +170,53 @@ function extractTailwindClasses(text: string, results: ColorMatch[]): void {
           const offset = classMatch.index + prefix.length;
           const end = classMatch.index + classMatch[0].length;
 
-          if (!rangeOverlaps(results, offset, end)) {
-            results.push({
-              color: colorData,
-              endOffset: end,
-              originalText: colorName + (alpha || ''),
-              startOffset: offset,
-            });
-          }
-        }
-      }
-    }
-  }
-}
-
-function extractNamedColors(text: string, languageId: string, results: ColorMatch[]): void {
-  const isPureCss = PURE_CSS_LANGUAGES.has(languageId);
-  const isMixedCss = MIXED_CSS_LANGUAGES.has(languageId);
-
-  if (isPureCss || isMixedCss) {
-    for (const wordMatch of text.matchAll(WORD_RE)) {
-      const word = wordMatch[0].toLowerCase();
-      const rgb = NAMED_COLORS.get(word);
-      if (rgb) {
-        const offset = wordMatch.index;
-        const end = offset + wordMatch[0].length;
-
-        // Skip words adjacent to hyphens (e.g., utility classes or variables).
-        const isClassFragment = isAdjacentToHyphen(text, offset, end);
-
-        if (!isClassFragment && !rangeOverlaps(results, offset, end)) {
           results.push({
-            color: {
-              css: wordMatch[0],
-              opaqueCss: word === 'transparent' ? '#000000' : wordMatch[0],
-              rgba: { a: word === 'transparent' ? 0 : 1, b: rgb[2], g: rgb[1], r: rgb[0] },
-            },
+            color: colorData,
             endOffset: end,
-            originalText: wordMatch[0],
+            originalText: colorName + (alpha || ''),
             startOffset: offset,
           });
         }
       }
     }
   }
+  return results;
+}
+
+function extractNamedColors(text: string, languageId: string): ColorMatch[] {
+  const isPureCss = PURE_CSS_LANGUAGES.has(languageId);
+  const isMixedCss = MIXED_CSS_LANGUAGES.has(languageId);
+
+  if (!isPureCss && !isMixedCss) {
+    return [];
+  }
+
+  const results: ColorMatch[] = [];
+  for (const wordMatch of text.matchAll(WORD_RE)) {
+    const word = wordMatch[0].toLowerCase();
+    const rgb = NAMED_COLORS.get(word);
+    if (rgb) {
+      const offset = wordMatch.index;
+      const end = offset + wordMatch[0].length;
+
+      // Skip words adjacent to hyphens (e.g., utility classes or variables).
+      const isClassFragment = isAdjacentToHyphen(text, offset, end);
+
+      if (!isClassFragment) {
+        results.push({
+          color: {
+            css: wordMatch[0],
+            opaqueCss: word === 'transparent' ? '#000000' : wordMatch[0],
+            rgba: { a: word === 'transparent' ? 0 : 1, b: rgb[2], g: rgb[1], r: rgb[0] },
+          },
+          endOffset: end,
+          originalText: wordMatch[0],
+          startOffset: offset,
+        });
+      }
+    }
+  }
+  return results;
 }
 
 // -------------------------------------- PUBLIC API -------------------------------------
@@ -170,21 +232,12 @@ export function extractColors(
   languageId: string,
   options: DocumentResolvedConfig & { uri?: string }
 ): ColorMatch[] {
-  const results: ColorMatch[] = [];
+  let results: ColorMatch[] = [];
 
-  // Rebuild the regex dynamically if we need optional patterns.
-  // The strategies provide `getPatterns(options)` to return an array of regex string parts.
-  const patterns: string[] = [];
-  for (const strategy of strategies) {
-    if (strategy.getPatterns) {
-      patterns.push(...strategy.getPatterns(options));
-    } else {
-      patterns.push(strategy.pattern);
-    }
-  }
-  const colorRe = new RegExp(`(${patterns.join('|')})`, 'gi');
+  const colorRe = getRegex(options);
 
-  // [1] Functional and hexa colors (all languages)
+  // [1] Functional and hexa colors (all languages).
+  const pass1: ColorMatch[] = [];
   for (const match of text.matchAll(colorRe)) {
     let colorData: ColorData | undefined = undefined;
     for (const strategy of strategies) {
@@ -202,7 +255,7 @@ export function extractColors(
         setVariable(defMatch.groups.name, colorData, options.uri ?? '');
       }
 
-      results.push({
+      pass1.push({
         color: colorData,
         endOffset: match.index + match[0].length,
         originalText: match[0],
@@ -210,18 +263,19 @@ export function extractColors(
       });
     }
   }
+  results = pass1;
 
-  // [2] CSS Variable Usages
-  extractVariableUsages(text, results);
+  // [2] CSS Variable Usages.
+  results = mergeNonOverlapping(results, extractVariableUsages(text));
 
-  // [3] Tailwind Classes
+  // [3] Tailwind Classes.
   if (options.markTailwind) {
-    extractTailwindClasses(text, results);
+    results = mergeNonOverlapping(results, extractTailwindClasses(text));
   }
 
-  // [4] Named CSS colors
+  // [4] Named CSS colors.
   if (options.markNamedColors) {
-    extractNamedColors(text, languageId, results);
+    results = mergeNonOverlapping(results, extractNamedColors(text, languageId));
   }
 
   return results;

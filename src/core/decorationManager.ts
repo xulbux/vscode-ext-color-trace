@@ -119,12 +119,15 @@ function createEntry(fingerprint: string): DecorationEntry {
  */
 function addToCache(key: string, entry: DecorationEntry): void {
   if (cache.size >= LRU_CAPACITY) {
-    // Evict oldest (first key in insertion-order Map).
-    const oldest = cache.keys().next().value;
-    if (oldest !== undefined) {
-      const evicted = cache.get(oldest);
-      evicted?.type.dispose();
-      cache.delete(oldest);
+    // Find the oldest entry that is NOT currently being used in any editor.
+    for (const [k, v] of cache.entries()) {
+      if (v.activeEditors.size === 0) {
+        v.type.dispose();
+        cache.delete(k);
+        if (cache.size < LRU_CAPACITY) {
+          break;
+        }
+      }
     }
   }
   cache.set(key, entry);
