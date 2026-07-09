@@ -128,3 +128,12 @@ export function clampChannel(value: number): number {
 export function clampAlpha(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
+
+/**
+ * Remove alpha channel specifications from a native CSS string.
+ * @param cssStr   The CSS string (e.g. `hwb(120 50% 50% / 0.5)`).
+ * @returns The opaque CSS string without the alpha.
+ */
+export function removeCssAlpha(cssStr: string): string {
+  return cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+}

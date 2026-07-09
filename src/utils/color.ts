@@ -6,10 +6,10 @@ import type { RGBA } from '@/types';
 
 /**
  * Convert HSL to RGB.
- * @param h  Hue         (0-360)
- * @param s  Saturation  (0-1)
- * @param l  Lightness   (0-1)
- * @returns  `[r, g, b]` each 0-255
+ * @param h   Hue         (0-360)
+ * @param s   Saturation  (0-1)
+ * @param l   Lightness   (0-1)
+ * @returns `[r, g, b]` each 0-255
  */
 export function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const hue = ((h % 360) + 360) % 360;
@@ -52,10 +52,10 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
 
 /**
  * Convert HWB to RGB.
- * @param h  Hue        (0-360)
- * @param w  Whiteness  (0-1)
- * @param b  Blackness  (0-1)
- * @returns  `[r, g, b]` each 0-255
+ * @param h   Hue        (0-360)
+ * @param w   Whiteness  (0-1)
+ * @param b   Blackness  (0-1)
+ * @returns `[r, g, b]` each 0-255
  */
 export function hwbToRgb(h: number, w: number, b: number): [number, number, number] {
   // When w + b >= 1 the color is a neutral grey.
@@ -85,10 +85,10 @@ function linearize(channel: number): number {
 
 /**
  * Compute WCAG 2.1 relative luminance.
- * @param r  Red    (0-255)
- * @param g  Green  (0-255)
- * @param b  Blue   (0-255)
- * @returns  Luminance in 0-1
+ * @param r   Red    (0-255)
+ * @param g   Green  (0-255)
+ * @param b   Blue   (0-255)
+ * @returns Luminance in 0-1
  */
 export function relativeLuminance(r: number, g: number, b: number): number {
   return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
@@ -122,9 +122,40 @@ function toHex(n: number): string {
 
 /**
  * Convert RGBA to a hexa string.
- * @returns  `#RRGGBB` when fully opaque, `#RRGGBBAA` otherwise.
+ * @returns `#RRGGBB` when fully opaque, `#RRGGBBAA` otherwise.
  */
 export function rgbaToHexString(rgba: RGBA): string {
   const base = `#${toHex(rgba.r)}${toHex(rgba.g)}${toHex(rgba.b)}`;
   return rgba.a >= 1 ? base : `${base}${toHex(Math.round(rgba.a * 255))}`;
+}
+
+/**
+ * Format a raw hex digits string into standard CSS hex strings.
+ * @param digits    The raw hex digits (e.g. `RRGGBBAA` or `RGB`).
+ * @param useARGB   If true, 8-digit hexes are interpreted as `#AARRGGBB`.
+ * @returns An object with the native CSS string and its fully opaque version.
+ */
+export function formatHexCss(
+  digits: string,
+  useARGB = false
+): { cssStr: string; opaqueCss: string } {
+  let cssStr = `#${digits}`;
+  let opaqueCss = '';
+
+  if (useARGB && digits.length === 8) {
+    const aa = digits.slice(0, 2);
+    const rrggbb = digits.slice(2, 8);
+    cssStr = `#${rrggbb}${aa}`;
+    opaqueCss = `#${rrggbb}`;
+  } else {
+    let len = digits.length;
+    if (len === 4) {
+      len = 3;
+    } else if (len === 8) {
+      len = 6;
+    }
+    opaqueCss = `#${digits.slice(0, len)}`;
+  }
+
+  return { cssStr, opaqueCss };
 }

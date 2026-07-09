@@ -26,9 +26,9 @@ const editorStyleKeys = new Map<string, Set<string>>();
  * Build a unique fingerprint for a decoration style.
  * Format: `bg:<css>|fg:<hex>|border:<css>|outline:<css>`
  *
- * @param color       The highlight color data containing native CSS string and RGBA fallback.
- * @param options     The extension configuration.
- * @param outlineCss  The statically calculated outline CSS.
+ * @param color        The marker color data containing native CSS string and RGBA fallback.
+ * @param options      The extension configuration.
+ * @param outlineCss   The statically calculated outline CSS.
  */
 function styleFingerprint(
   color: ColorData,
@@ -38,7 +38,7 @@ function styleFingerprint(
   // Respect the showAlpha setting.
   const rgba = options.showAlpha ? color.rgba : { ...color.rgba, a: 1 };
 
-  // If the highlight is semi-transparent, blend it over the editor background first.
+  // If the marker is semi-transparent, blend it over the editor background first.
   const solid = rgba.a < 1 ? alphaBlend(rgba, options.editorBackground) : rgba;
   const lum = relativeLuminance(solid.r, solid.g, solid.b);
   const fg = lum > 0.179 ? '#000000' : '#FFFFFF';
@@ -145,9 +145,9 @@ function editorKey(editor: vscode.TextEditor): string {
  * Groups the supplied color matches by computed visual style, creates or reuses
  * cached TextEditorDecorationTypes, and applies them in one batch per unique style.
  *
- * @param editor   The editor to decorate.
- * @param matches  Color matches with resolved RGBA and document ranges.
- * @param config   The resolved extension configuration.
+ * @param editor    The editor to decorate.
+ * @param matches   Color matches with resolved RGBA and document ranges.
+ * @param config    The resolved extension configuration.
  */
 export function applyDecorations(
   editor: vscode.TextEditor,

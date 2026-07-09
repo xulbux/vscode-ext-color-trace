@@ -1,4 +1,5 @@
 import type { ColorData, ColorParsingStrategy, DocumentResolvedConfig } from '@/types';
+import { formatHexCss } from '@/utils/color';
 import {
   ALPHA,
   NUM,
@@ -66,23 +67,7 @@ export const rgbStrategy: ColorParsingStrategy = {
           const rgba = parseHex(hexStr, options?.useARGB);
           if (rgba) {
             // Return a valid CSS hex string so the browser rendering engine doesn't reject it.
-            let cssStr = `#${hexStr}`;
-            let opaqueCss = '';
-
-            if (options?.useARGB && hexLen === 8) {
-              const aa = hexStr.slice(0, 2);
-              const rrggbb = hexStr.slice(2, 8);
-              cssStr = `#${rrggbb}${aa}`;
-              opaqueCss = `#${rrggbb}`;
-            } else {
-              let len = hexLen;
-              if (len === 4) {
-                len = 3;
-              } else if (len === 8) {
-                len = 6;
-              }
-              opaqueCss = `#${hexStr.slice(0, len)}`;
-            }
+            const { cssStr, opaqueCss } = formatHexCss(hexStr, options?.useARGB);
 
             return { css: cssStr, opaqueCss, rgba };
           }

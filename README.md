@@ -2,12 +2,12 @@
 
 # Color Trace<a href="https://github.com/xulbux/vscode-ext-color-trace"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/icon.png?raw=true"></a>
 
-### Fast, readable web color highlighting in the editor.
+### Fast, readable web color marking in the editor.
 
-This VS Code extension provides blazing fast color highlighting for modern web formats, including CSS variables, Tailwind classes, and wide-gamut colors.
+This VS Code extension provides blazing fast color marking for modern web formats, including CSS variables, Tailwind classes, and wide-gamut colors.
 
 > <br>
-> 🎨 To get a better feeling of how the highlights look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
+> 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
 > <br>
 > <br>
 
@@ -46,7 +46,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
     </tr>
     <tr>
       <td align="left"><strong>Variable Tracing</strong></td>
-      <td align="left">Cross-file detection and highlighting of CSS variables (e.g., <code>var(--primary-color)</code>)</td>
+      <td align="left">Cross-file detection and marking of CSS variables (e.g., <code>var(--primary-color)</code>)</td>
     </tr>
   </tbody>
 </table>
@@ -62,7 +62,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 > <a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png?raw=true" alt="CSS Variable Tracing" height="300" align="center"></a>
 
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Tailwind CSS**
-> <a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png?raw=true" alt="Tailwind CSS Highlighting" height="300" align="center"></a>
+> <a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png?raw=true" alt="Tailwind CSS Marking" height="300" align="center"></a>
 
 <br>
 <br>

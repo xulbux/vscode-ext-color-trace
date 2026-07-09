@@ -1,5 +1,13 @@
 import type { ColorData, ColorParsingStrategy } from '@/types';
-import { ALPHA, HUE, NUM, clampAlpha, parseAlpha, parseColorTokens } from '@/utils/strategy';
+import {
+  ALPHA,
+  HUE,
+  NUM,
+  clampAlpha,
+  parseAlpha,
+  parseColorTokens,
+  removeCssAlpha,
+} from '@/utils/strategy';
 
 function parseL(token: string): number {
   if (token.endsWith('%')) {
@@ -41,7 +49,7 @@ export const oklchStrategy: ColorParsingStrategy = {
     const a = clampAlpha(parseAlpha(tokens[3]));
 
     const cssStr = matchText.replace('°', 'deg');
-    const opaqueCss = cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+    const opaqueCss = removeCssAlpha(cssStr);
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },

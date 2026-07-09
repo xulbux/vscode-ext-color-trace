@@ -162,8 +162,8 @@ function extractNamedColors(text: string, languageId: string, results: ColorMatc
 /**
  * Extract all color literals from `text`.
  *
- * @param text        The source text to scan.
- * @param languageId  VS Code language ID of the document (for named-color filtering).
+ * @param text         The source text to scan.
+ * @param languageId   VS Code language ID of the document (for named-color filtering).
  */
 export function extractColors(
   text: string,
@@ -215,12 +215,12 @@ export function extractColors(
   extractVariableUsages(text, results);
 
   // [3] Tailwind Classes
-  if (options.highlightTailwind) {
+  if (options.markTailwind) {
     extractTailwindClasses(text, results);
   }
 
   // [4] Named CSS colors
-  if (options.highlightNamedColors) {
+  if (options.markNamedColors) {
     extractNamedColors(text, languageId, results);
   }
 

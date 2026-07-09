@@ -2,7 +2,7 @@
   "name": "color-trace",
   "displayName": "Color Trace",
   "version": "1.0.0",
-  "description": "Fast, readable web color highlighting in the editor.",
+  "description": "Fast, readable web color marking in the editor.",
   "categories": [
     "Other",
     "Visualization"
@@ -77,32 +77,19 @@
             "dot-before",
             "dot-after"
           ],
-          "description": "Style of the highlight marker."
+          "description": "Style of the color marker."
         },
         "colorTrace.showAlpha": {
           "type": "boolean",
           "default": true,
           "description": "Whether to render color markers with their parsed transparency. If false, markers will always be fully opaque."
         },
-        "colorTrace.highlightNamedColors": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "css",
-            "scss",
-            "sass",
-            "less",
-            "html",
-            "vue",
-            "svelte",
-            "javascriptreact",
-            "typescriptreact"
-          ],
-          "description": "Highlight named CSS colors (e.g. `red`, `tomato`, …) in specific languages. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
+        "colorTrace.markNamedColors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
         },
-        "colorTrace.highlightTailwind": {
+        "colorTrace.markTailwind": {
           "type": "array",
           "items": {
             "type": "string"
@@ -110,7 +97,7 @@
           "default": [
             "*"
           ],
-          "description": "Highlight Tailwind CSS color classes. Language IDs to highlight. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
+          "description": "Mark Tailwind CSS color classes. Language IDs to mark. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
         },
         "colorTrace.matchRgbWithNoFunction": {
           "type": "array",
@@ -118,7 +105,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Highlight raw RGB numbers (e.g. `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to highlight. Use `*` to enable for all."
+          "description": "Mark raw RGB numbers (e.g. `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTrace.matchHslWithNoFunction": {
           "type": "array",
@@ -126,7 +113,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Highlight raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to highlight. Use `*` to enable for all."
+          "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTrace.useARGB": {
           "type": "array",
@@ -134,7 +121,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Parse 8-character hex codes as `#AARRGGBB` instead of `#RRGGBBAA`. Language IDs to highlight. Use `*` to enable for all."
+          "description": "Parse 8-character hex codes as `#AARRGGBB` instead of `#RRGGBBAA`. Language IDs to mark. Use `*` to enable for all."
         }
       }
     }

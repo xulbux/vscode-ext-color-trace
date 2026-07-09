@@ -9,6 +9,7 @@ import {
   parseColorTokens,
   parseHue,
   parsePercent,
+  removeCssAlpha,
 } from '@/utils/strategy';
 
 export const hwbStrategy: ColorParsingStrategy = {
@@ -26,7 +27,7 @@ export const hwbStrategy: ColorParsingStrategy = {
     const [r, g, b] = hwbToRgb(h, w, bk);
 
     const cssStr = matchText.replace('°', 'deg');
-    const opaqueCss = cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+    const opaqueCss = removeCssAlpha(cssStr);
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },

@@ -6,8 +6,9 @@ export interface RGBA {
   a: number;
 }
 
+/** Represents a parsed color with both its native CSS string and an RGBA fallback. */
 export interface ColorData {
-  /** The native CSS string used to style the highlight (e.g. `oklch(60% 0.1 250)`). */
+  /** The native CSS string used to style the marker (e.g. `oklch(60% 0.1 250)`). */
   css: string;
   /** RGBA approximation used to calculate text foreground contrast. */
   rgba: RGBA;
@@ -17,10 +18,13 @@ export interface ColorData {
 
 import type { DocumentResolvedConfig } from './config';
 
+/** Defines how to match and extract a specific color format (e.g., HEX, RGB, HSL). */
 export interface ColorParsingStrategy {
+  /** Unique identifier for the strategy. */
   id: string;
   /** The regex source string without capture groups that might conflict, or a non-capturing pattern. */
   pattern: string;
+  /** Returns an array of alternative regex source strings for matching. */
   getPatterns?: (options?: DocumentResolvedConfig) => string[];
   /** Parses the matched string into ColorData. */
   extract: (matchText: string, options?: DocumentResolvedConfig) => ColorData | undefined;

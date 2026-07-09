@@ -1,5 +1,12 @@
 import type { ColorData, ColorParsingStrategy, DocumentResolvedConfig } from '@/types';
+import { formatHexCss } from '@/utils/color';
 
+/**
+ * Parses a hex string into an RGBA object.
+ * @param digits    The raw hex digits.
+ * @param useARGB   If true, 8-digit hex strings are interpreted as ARGB instead of RGBA.
+ * @returns The parsed RGBA object, or undefined if invalid.
+ */
 export function parseHex(
   digits: string,
   useARGB = false
@@ -62,35 +69,21 @@ export const hexStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
+    const { cssStr, opaqueCss } = formatHexCss(digits, options?.useARGB);
+
     // For hex colors, the native CSS representation is usually best kept as the hex string.
     // Except if it's 0x… we convert to #… so CSS understands it.
-    let cssStr = matchText.trim();
-    if (cssStr.toLowerCase().startsWith('0x')) {
-      cssStr = `#${digits}`;
-    }
-
-    if (options?.useARGB && digits.length === 8) {
-      const aa = digits.slice(0, 2);
-      const rrggbb = digits.slice(2, 8);
-      cssStr = `#${rrggbb}${aa}`;
-    }
-
-    let opaqueCss = '';
-    if (options?.useARGB && digits.length === 8) {
-      opaqueCss = `#${digits.slice(2, 8)}`;
+    let finalCssStr = cssStr;
+    if (matchText.trim().toLowerCase().startsWith('0x')) {
+      finalCssStr = cssStr; // formatHexCss already converted digits to #…
     } else {
-      let len = digits.length;
-      if (len === 4) {
-        len = 3;
-      } else if (len === 8) {
-        len = 6;
-      }
-      opaqueCss = `#${digits.slice(0, len)}`;
+      // Preserve the original prefix (#) if needed, formatHexCss does # by default.
+      // Actually formatHexCss returns `#digits` which is correct for `#…` inputs too.
     }
 
-    return { css: cssStr, opaqueCss, rgba };
+    return { css: finalCssStr, opaqueCss, rgba };
   },
   id: 'hex',
-  /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x...` equivalents */
+  /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x…` equivalents */
   pattern: String.raw`(?:#|0x)(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b`,
 };

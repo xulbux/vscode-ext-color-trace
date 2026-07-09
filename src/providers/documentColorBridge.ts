@@ -14,8 +14,8 @@ import { extractTokens } from '@/utils/strategy';
 /**
  * Query all registered DocumentColorProviders for the given document.
  *
- * @returns  `ColorMatch[]` derived from other extensions' color providers.
- *           Returns an empty array if no providers are available.
+ * @returns `ColorMatch[]` derived from other extensions' color providers.
+ *          Returns an empty array if no providers are available.
  */
 // oxlint-disable-next-line complexity
 export async function getProviderColors(
@@ -59,13 +59,13 @@ export async function getProviderColors(
         }
       }
 
-      if (isValid && !options.highlightNamedColors) {
+      if (isValid && !options.markNamedColors) {
         if (NAMED_COLORS.has(originalText.toLowerCase())) {
           isValid = false;
         }
       }
 
-      if (isValid && !options.highlightTailwind) {
+      if (isValid && !options.markTailwind) {
         if (
           originalText.includes('-') &&
           !originalText.includes('(') &&

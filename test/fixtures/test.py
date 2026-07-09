@@ -1,8 +1,5 @@
 # Python test fixture for Color Trace
 
-# Named colors (like `red` or `tomato`) shouldn't highlight here since it's not a
-# CSS language, but standard hex and rgb values should highlight perfectly.
-
 
 class Theme:
     PRIMARY = '#9670FF'
@@ -12,7 +9,8 @@ class Theme:
     ACCENT = "hsl(21, 100%, 66%)"
     SUCCESS = "hwb(150 24% 15%)"
 
-    BACKGROUND_INT = 0x1E1E1E
+    BG_INT = 0x1E1E1E
+    BG_TP_INT = 0x1E1E1E80
 
     def get_styles(self):
         return {"btn": "bg-[#F00] text-white", "error": "red"}

@@ -73,9 +73,8 @@ function mergeMatches(
   }
 
   // [2] Add any provider matches that didn't overlap with our regexes.
-  for (let i = 0; i < providerMatches.length; i += 1) {
+  for (const [i, pm] of providerMatches.entries()) {
     if (!consumedProviders.has(i)) {
-      const pm = providerMatches[i];
       const range = new vscode.Range(
         options.doc.positionAt(pm.startOffset),
         options.doc.positionAt(pm.endOffset)
@@ -108,8 +107,8 @@ import { resolveDocumentConfig } from '@/config';
 /**
  * Scan the visible portions of an editor for colors and apply decorations.
  *
- * @param editor  The text editor to scan.
- * @param config  The resolved extension configuration.
+ * @param editor   The text editor to scan.
+ * @param config   The resolved extension configuration.
  */
 export async function scanEditor(
   editor: vscode.TextEditor,
