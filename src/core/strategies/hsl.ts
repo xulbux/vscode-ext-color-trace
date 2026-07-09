@@ -5,16 +5,16 @@ import {
   HUE,
   NUM,
   clampAlpha,
-  extractTokens,
   parseAlpha,
+  parseColorTokens,
   parseHue,
   parsePercent,
 } from '@/utils/strategy';
 
 export const hslStrategy: ColorParsingStrategy = {
   extract(matchText: string): ColorData | undefined {
-    const tokens = extractTokens(matchText);
-    if (tokens.length < 3) {
+    const tokens = parseColorTokens(matchText, ['hsl']);
+    if (!tokens) {
       return undefined;
     }
 
@@ -25,7 +25,7 @@ export const hslStrategy: ColorParsingStrategy = {
 
     const [r, g, b] = hslToRgb(h, s, l);
 
-    return { css: matchText, rgba: { a, b, g, r } };
+    return { css: matchText.replace('°', 'deg'), rgba: { a, b, g, r } };
   },
   id: 'hsl',
   pattern: String.raw`hsla?\(\s*${HUE}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*\)`,

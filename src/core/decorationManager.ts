@@ -42,29 +42,47 @@ function styleFingerprint(color: ColorData, editorBg: RGBA, outlineCss: string):
   const isTransparent = rgba.a < 1;
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
-  const borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
+  // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
+  let borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
+  if (color.css.toLowerCase() === 'transparent') {
+    borderColor = 'transparent';
+  }
 
   return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}`;
 }
 
-/**
- * Parse a fingerprint and create a new decoration type + entry.
- */
 function createEntry(fingerprint: string): DecorationEntry {
-  const parts = new Map<string, string>();
+  let bg = 'transparent',
+    fg = '#FFFFFF',
+    borderColor: string | undefined = undefined,
+    outline: string | undefined = undefined;
+
   for (const segment of fingerprint.split('|')) {
     const idx = segment.indexOf(':');
-    parts.set(segment.slice(0, idx), segment.slice(idx + 1));
+    if (idx !== -1) {
+      const key = segment.slice(0, idx);
+      const val = segment.slice(idx + 1);
+
+      if (key === 'bg') {
+        bg = val;
+      } else if (key === 'fg') {
+        fg = val;
+      } else if (key === 'borderColor') {
+        borderColor = val;
+      } else if (key === 'outline') {
+        outline = val;
+      }
+    }
   }
 
   const decoOptions: vscode.DecorationRenderOptions = {
-    backgroundColor: parts.get('bg') ?? 'transparent',
-    borderColor: parts.get('borderColor'),
+    backgroundColor: bg,
+    borderColor,
     borderRadius: '0.25em',
     borderStyle: 'solid',
-    borderWidth: '0.2em 0.05em',
-    color: parts.get('fg') ?? '#FFFFFF',
-    outline: parts.get('outline'),
+    borderWidth: '0.2em 0.06em',
+    color: fg,
+    outline,
   };
 
   return {
@@ -121,7 +139,7 @@ export function applyDecorations(
   // Calculate static outline CSS once for the whole file scan based on editor bg.
   const editorLum = relativeLuminance(options.editorBg.r, options.editorBg.g, options.editorBg.b);
   const outlineCss =
-    editorLum > 0.179 ? '1px solid rgba(0, 0, 0, 0.10)' : '1px solid rgba(255, 255, 255, 0.12)';
+    editorLum > 0.179 ? '1px solid rgb(0 0 0 / 0.10)' : '1px solid rgb(255 255 255 / 0.16)';
 
   for (const { range, color } of matches) {
     const key = styleFingerprint(color, options.editorBg, outlineCss);

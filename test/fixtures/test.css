@@ -12,6 +12,33 @@
   --color-brand-red: #ff5a5c;
   --color-brand-blue: #7075ff;
   --color-transparent-black: rgba(0, 0, 0, 0.5);
+
+  /* Hex */
+  --color-hex: #97f;
+  --color-hexa: #97f8;
+  --color-alt-hex: #9670ff;
+  --color-alt-hexa: #9670ff80;
+
+  /* RGB */
+  --color-rgb: rgb(150 112 255);
+  --color-rgba: rgba(150 112 255 / 0.5);
+  --color-alt-rgb: rgb(150, 112, 255);
+  --color-alt-rgba: rgba(150, 112, 255, 0.5);
+
+  /* HSL */
+  --color-hsl: hsl(256 100% 72%);
+  --color-hsla: hsl(256 100% 72% / 0.5);
+  --color-alt-hsl: hsl(256deg, 100%, 72%);
+  --color-alt-hsla: hsl(256deg, 100%, 72%, 0.5);
+
+  /* HWB */
+  --color-hwb: hwb(256 44% 0%);
+
+  /* OKLCH (Wide Gamut) */
+  --color-oklch: oklch(60% 0.15 25);
+  --color-lch: lch(60% 40 25);
+  --color-oklab: oklab(0.6 0.1 0.1);
+  --color-lab: lab(60 20 20);
 }
 
 /********************************** Color Formats *********************************/

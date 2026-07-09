@@ -47,10 +47,10 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 // -------------------------------------- EXTRACTORS -------------------------------------
 
 function extractVariableUsages(text: string, results: ColorMatch[]): void {
-  VAR_USE_RE.lastIndex = 0;
-  let varMatch = VAR_USE_RE.exec(text);
-
-  while (varMatch !== null) {
+  if (!text.includes('var(')) {
+    return;
+  }
+  for (const varMatch of text.matchAll(VAR_USE_RE)) {
     const varName = varMatch.groups?.name;
     if (varName) {
       const colorData = getVariable(varName);
@@ -68,7 +68,6 @@ function extractVariableUsages(text: string, results: ColorMatch[]): void {
         }
       }
     }
-    varMatch = VAR_USE_RE.exec(text);
   }
 }
 
@@ -84,9 +83,7 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
 }
 
 function extractTailwindClasses(text: string, results: ColorMatch[]): void {
-  CLASS_RE.lastIndex = 0;
-  let classMatch = CLASS_RE.exec(text);
-  while (classMatch !== null) {
+  for (const classMatch of text.matchAll(CLASS_RE)) {
     if (isValidTailwindBoundary(text, classMatch.index)) {
       const prefix = classMatch.groups?.prefix;
       const colorName = classMatch.groups?.colorName;
@@ -110,7 +107,7 @@ function extractTailwindClasses(text: string, results: ColorMatch[]): void {
             if (!Number.isNaN(alphaValue)) {
               const newRgba = { ...colorData.rgba, a: colorData.rgba.a * alphaValue };
               colorData = {
-                css: `rgba(${newRgba.r}, ${newRgba.g}, ${newRgba.b}, ${newRgba.a})`,
+                css: `rgb(${newRgba.r} ${newRgba.g} ${newRgba.b} / ${newRgba.a})`,
                 rgba: newRgba,
               };
             }
@@ -130,7 +127,6 @@ function extractTailwindClasses(text: string, results: ColorMatch[]): void {
         }
       }
     }
-    classMatch = CLASS_RE.exec(text);
   }
 }
 
@@ -139,9 +135,7 @@ function extractNamedColors(text: string, languageId: string, results: ColorMatc
   const isMixedCss = MIXED_CSS_LANGUAGES.has(languageId);
 
   if (isPureCss || isMixedCss) {
-    WORD_RE.lastIndex = 0;
-    let wordMatch = WORD_RE.exec(text);
-    while (wordMatch !== null) {
+    for (const wordMatch of text.matchAll(WORD_RE)) {
       const word = wordMatch[0].toLowerCase();
       const rgb = NAMED_COLORS.get(word);
       if (rgb) {
@@ -163,7 +157,6 @@ function extractNamedColors(text: string, languageId: string, results: ColorMatc
           });
         }
       }
-      wordMatch = WORD_RE.exec(text);
     }
   }
 }
@@ -184,9 +177,7 @@ export function extractColors(
   const results: ColorMatch[] = [];
 
   // [1] Functional and hexa colors (all languages)
-  COLOR_RE.lastIndex = 0;
-  let match = COLOR_RE.exec(text);
-  while (match !== null) {
+  for (const match of text.matchAll(COLOR_RE)) {
     let colorData: ColorData | undefined = undefined;
     for (const strategy of strategies) {
       colorData = strategy.extract(match[0]);
@@ -210,7 +201,6 @@ export function extractColors(
         startOffset: match.index,
       });
     }
-    match = COLOR_RE.exec(text);
   }
 
   // [2] CSS Variable Usages

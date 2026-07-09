@@ -1,5 +1,5 @@
 import type { ColorData, ColorParsingStrategy } from '@/types';
-import { ALPHA, NUM, clampAlpha, extractTokens, parseAlpha } from '@/utils/strategy';
+import { ALPHA, HUE, NUM, clampAlpha, parseAlpha, parseColorTokens } from '@/utils/strategy';
 
 function parseL(token: string): number {
   if (token.endsWith('%')) {
@@ -25,8 +25,11 @@ function approximateRgbFromL(l: number): { r: number; g: number; b: number } {
 
 export const oklchStrategy: ColorParsingStrategy = {
   extract(matchText: string): ColorData | undefined {
-    const tokens = extractTokens(matchText);
-    if (tokens.length < 3) {
+    const tokens = parseColorTokens(matchText, ['oklch', 'lch', 'oklab', 'lab'], {
+      allowCommas: false,
+      minTokens: 3,
+    });
+    if (!tokens) {
       return undefined;
     }
 
@@ -37,8 +40,8 @@ export const oklchStrategy: ColorParsingStrategy = {
     const { r, g, b } = approximateRgbFromL(l);
     const a = clampAlpha(parseAlpha(tokens[3]));
 
-    return { css: matchText, rgba: { a, b, g, r } };
+    return { css: matchText.replace('°', 'deg'), rgba: { a, b, g, r } };
   },
   id: 'oklch',
-  pattern: String.raw`(?:oklch|lch|oklab|lab)\(\s*${NUM}\s+${NUM}\s+${NUM}(?:\s*/\s*${ALPHA})?\s*\)`,
+  pattern: String.raw`(?:oklch|lch|oklab|lab)\(\s*${NUM}\s+${NUM}\s+${HUE}(?:\s*/\s*${ALPHA})?\s*\)`,
 };

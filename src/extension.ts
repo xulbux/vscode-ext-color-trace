@@ -53,19 +53,31 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace
       .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', '**/node_modules/**', 100)
       .then(async (uris) => {
-        const promises = uris.map(async (uri) => {
-          try {
-            const bytes = await vscode.workspace.fs.readFile(uri);
-            const text = new TextDecoder().decode(bytes);
-            const uriStr = uri.toString();
-            clearVariablesForUri(uriStr);
-            extractColors(text, 'css', { matchNamed: false, matchTailwind: false, uri: uriStr });
-          } catch {
-            // Ignore read errors.
-          }
-        });
+        for (let i = 0; i < uris.length; i += 5) {
+          const chunk = uris.slice(i, i + 5);
+          // oxlint-disable-next-line no-await-in-loop
+          await Promise.all(
+            chunk.map(async (uri) => {
+              try {
+                const bytes = await vscode.workspace.fs.readFile(uri);
+                const text = new TextDecoder().decode(bytes);
+                const uriStr = uri.toString();
+                clearVariablesForUri(uriStr);
+                extractColors(text, 'css', {
+                  matchNamed: false,
+                  matchTailwind: false,
+                  uri: uriStr,
+                });
+              } catch {
+                // Ignore read errors.
+              }
+            })
+          );
 
-        await Promise.all(promises);
+          // Yield to the event loop between chunks to prevent freezing the extension host.
+          // oxlint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
 
         clearCache();
         scanAllVisible(config);

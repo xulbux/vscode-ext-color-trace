@@ -8,6 +8,7 @@
 
 import * as vscode from 'vscode';
 import type { ColorMatch } from '@/types';
+import { extractTokens } from '@/utils/strategy';
 
 /**
  * Query all registered DocumentColorProviders for the given document.
@@ -26,21 +27,47 @@ export async function getProviderColors(document: vscode.TextDocument): Promise<
       return [];
     }
 
-    return colors.map((info) => {
+    const matches: ColorMatch[] = [];
+
+    for (const info of colors) {
       const startOffset = document.offsetAt(info.range.start);
       const endOffset = document.offsetAt(info.range.end);
       const originalText = document.getText(info.range);
 
-      // VS Code's Color uses 0-1 for all channels.
-      const rgba = {
-        a: info.color.alpha,
-        b: Math.round(info.color.blue * 255),
-        g: Math.round(info.color.green * 255),
-        r: Math.round(info.color.red * 255),
-      };
+      let isValid = true;
+      if (originalText.includes('(')) {
+        const lower = originalText.toLowerCase();
+        if (
+          lower.startsWith('rgb') ||
+          lower.startsWith('hsl') ||
+          lower.startsWith('hwb') ||
+          lower.startsWith('oklch') ||
+          lower.startsWith('lch') ||
+          lower.startsWith('oklab') ||
+          lower.startsWith('lab')
+        ) {
+          const allowCommas = lower.startsWith('rgb') || lower.startsWith('hsl');
+          const valid = extractTokens(originalText, allowCommas);
+          if (!valid) {
+            isValid = false;
+          }
+        }
+      }
 
-      return { color: { css: originalText, rgba }, endOffset, originalText, startOffset };
-    });
+      if (isValid) {
+        // VS Code's Color uses 0-1 for all channels.
+        const rgba = {
+          a: info.color.alpha,
+          b: Math.round(info.color.blue * 255),
+          g: Math.round(info.color.green * 255),
+          r: Math.round(info.color.red * 255),
+        };
+
+        matches.push({ color: { css: originalText, rgba }, endOffset, originalText, startOffset });
+      }
+    }
+
+    return matches;
   } catch {
     // Provider may not be available; Silently return empty.
     return [];

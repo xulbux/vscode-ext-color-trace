@@ -1,11 +1,11 @@
 /** Numeric value: integer or decimal, optionally a percentage */
-export const NUM = String.raw`(?:\d+(?:\.\d+)?%?)`;
+export const NUM = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
 
 /** Alpha value: number or percentage */
-export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?)`;
+export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
 
 /** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`) */
-export const HUE = String.raw`(?:\d+(?:\.\d+)?(?:deg|rad|grad|turn)?)`;
+export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?)`;
 
 /** Parse a numeric token as a 0-255 value or percentage. */
 export function parseChannel(token: string): number {
@@ -15,21 +15,26 @@ export function parseChannel(token: string): number {
   return Number.parseFloat(token);
 }
 
-/** Parse an alpha token (number 0-1 or percentage). */
-export function parseAlpha(token: string | undefined): number {
-  if (token === undefined) {
-    return 1;
-  }
+/** Parse a percentage token to a 0-1 value. */
+export function parsePercent(token: string): number {
   if (token.endsWith('%')) {
     return Number.parseFloat(token) / 100;
   }
   return Number.parseFloat(token);
 }
 
+/** Parse an alpha token (number 0-1 or percentage). */
+export function parseAlpha(token: string | undefined): number {
+  if (token === undefined) {
+    return 1;
+  }
+  return parsePercent(token);
+}
+
 /** Parse a hue token with optional unit into degrees. */
 export function parseHue(token: string): number {
   const value = Number.parseFloat(token);
-  if (token.endsWith('deg')) {
+  if (token.endsWith('deg') || token.endsWith('°')) {
     return value;
   }
   if (token.endsWith('rad')) {
@@ -44,19 +49,62 @@ export function parseHue(token: string): number {
   return value; // bare number = degrees
 }
 
-/** Parse a percentage token to a 0-1 value. */
-export function parsePercent(token: string): number {
-  if (token.endsWith('%')) {
-    return Number.parseFloat(token) / 100;
+/** Extract tokens from inside parentheses and validate CSS punctuation rules. */
+export function extractTokens(str: string, allowCommas = true): string[] | undefined {
+  const inner = str.slice(str.indexOf('(') + 1, str.lastIndexOf(')'));
+
+  const commaCount = (inner.match(/,/g) || []).length;
+  const slashCount = (inner.match(/\//g) || []).length;
+
+  if (!allowCommas && commaCount > 0) {
+    return undefined; // Invalid: commas are not allowed for this color format.
   }
-  return Number.parseFloat(token);
+
+  if (commaCount > 0 && slashCount > 0) {
+    return undefined; // Invalid: mixed commas and slash.
+  }
+  if (slashCount > 1) {
+    return undefined; // Invalid: multiple slashes.
+  }
+
+  const normalized = inner.replace(/[,/]/g, ' ').trim();
+  if (!normalized) {
+    return undefined;
+  }
+
+  const tokens = normalized.split(/\s+/);
+
+  if (commaCount > 0 && commaCount !== tokens.length - 1) {
+    return undefined; // Invalid: missing or extra commas.
+  }
+
+  if (commaCount === 0 && slashCount === 0 && tokens.length > 3) {
+    return undefined; // Invalid: missing slash for alpha in space-separated syntax.
+  }
+
+  return tokens;
 }
 
-/** Extract tokens from inside parentheses. */
-export function extractTokens(str: string): string[] {
-  const inner = str.slice(str.indexOf('(') + 1, str.lastIndexOf(')'));
-  // Normalize separators: replace commas and slashes with spaces, then split.
-  return inner.replace(/[,/]/g, ' ').trim().split(/\s+/);
+/**
+ * Boilerplate helper for color strategies.
+ * Checks if the matchText starts with any of the valid prefixes.
+ * Returns the parsed tokens if valid, otherwise undefined.
+ */
+export function parseColorTokens(
+  matchText: string,
+  validPrefixes: string[],
+  options: { allowCommas?: boolean; minTokens?: number } = {}
+): string[] | undefined {
+  const { allowCommas = true, minTokens = 3 } = options;
+  const lower = matchText.toLowerCase();
+  if (!validPrefixes.some((prefix) => lower.startsWith(prefix))) {
+    return undefined;
+  }
+  const tokens = extractTokens(matchText, allowCommas);
+  if (!tokens || tokens.length < minTokens) {
+    return undefined;
+  }
+  return tokens;
 }
 
 /** Clamp and round a channel value to 0-255. */
