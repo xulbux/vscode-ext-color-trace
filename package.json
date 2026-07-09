@@ -1,30 +1,147 @@
 {
-  "name": "color-trace",
+  "name": "color-tracr",
+  "displayName": "Color Tracr",
   "version": "1.0.0",
-  "displayName": "Color Trace",
-  "description": "Fast, readable web color highlighting in the editor.",
-  "icon": "./assets/icon.png",
-  "author": { "name": "XulbuX", "email": "xulbux.real@gmail.com" },
-  "publisher": "xulbux",
-  "maintainers": ["XulbuX <xulbux.real@gmail.com>"],
-	"license": "MIT",
-  "repository": {
-    "url": "https://github.com/xulbux/vscode-ext-color-trace",
-    "type": "git"
-  },
-  "bugs": { "url": "https://github.com/xulbux/vscode-ext-color-trace/issues" },
-  "sponsor": { "url": "https://github.com/sponsors/xulbux" },
-  "engines": { "vscode": "^1.128.0" },
-  "categories": ["Visualization", "Other"],
-  "keywords": [
-    "accessible",
-    "color",
-    "fast",
-    "flexible",
-    "highlight",
-    "readable",
-    "xulbux"
+  "description": "Fast, readable color marking in the editor.",
+  "categories": [
+    "Other",
+    "Visualization"
   ],
+  "keywords": [
+    "colors",
+    "css",
+    "hex",
+    "highlighting",
+    "hsl",
+    "markers",
+    "oklab",
+    "oklch",
+    "rgb",
+    "tailwind",
+    "tracer",
+    "tracing",
+    "tracker",
+    "tracking",
+    "variables",
+    "wide-gamut"
+  ],
+  "bugs": {
+    "url": "https://github.com/xulbux/vscode-ext-color-tracr/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "XulbuX",
+    "email": "xulbux.real@gmail.com"
+  },
+  "maintainers": [
+    "XulbuX <xulbux.real@gmail.com>"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xulbux/vscode-ext-color-tracr"
+  },
+  "sponsor": {
+    "url": "https://github.com/sponsors/xulbux"
+  },
+  "publisher": "xulbux",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "compile": "node esbuild.js",
+    "esbuild-watch": "node esbuild.js --watch",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "lint": "oxlint --fix",
+    "lint:check": "oxlint",
+    "type-check": "tsc --noEmit",
+    "vscode:prepublish": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.0",
+    "@types/vscode": "^1.125.0",
+    "esbuild": "^0.25.0",
+    "oxfmt": "^0.36.0",
+    "oxlint": "^1.71.0",
+    "typescript": "^5.9.3"
+  },
+  "contributes": {
+    "configuration": {
+      "title": "Color Tracr",
+      "properties": {
+        "colorTracr.enable": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "*"
+          ],
+          "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
+        },
+        "colorTracr.markerType": {
+          "type": "string",
+          "default": "highlight",
+          "enum": [
+            "highlight",
+            "dot-before",
+            "dot-after"
+          ],
+          "description": "Style of the color marker."
+        },
+        "colorTracr.showAlpha": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to render color markers with their parsed transparency. If false, markers will always be fully opaque."
+        },
+        "colorTracr.markNamedColors": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
+        },
+        "colorTracr.markTailwind": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "*"
+          ],
+          "description": "Mark Tailwind CSS color classes. Language IDs to mark. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
+        },
+        "colorTracr.matchRgbWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw RGB numbers (e.g. `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to mark. Use `*` to enable for all."
+        },
+        "colorTracr.matchHslWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
+        },
+        "colorTracr.useARGB": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Parse 8-character hex codes as `#AARRGGBB` instead of `#RRGGBBAA`. Language IDs to mark. Use `*` to enable for all."
+        }
+      }
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "icon": "./assets/icon.png",
+  "engines": {
+    "vscode": "^1.125.0"
+  },
   "__metadata": {
     "id": "39cf6240-75d9-4602-97ff-1c0b1e355e94",
     "publisherId": "77f5e7c0-42af-4d80-ab24-d9657bfebe93",

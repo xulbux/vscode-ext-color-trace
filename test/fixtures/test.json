@@ -1,0 +1,17 @@
+{
+  "theme": "dark",
+  "colors": {
+    "background": "#0D0D17",
+    "foreground": "#C9C9D9",
+    "primary": "rgba(150, 112, 255)",
+    "primary-transparent": "rgba(150, 112, 255, .5)",
+    "primary-raw": "150, 112, 255",
+    "primary-raw-transparent": "150, 112, 255, .5",
+    "secondary": "hsl(240, 12%, 48%)",
+    "secondary-transparent": "hsla(240, 12%, 48%, .5)",
+    "secondary-raw": "240, 12%, 48%",
+    "secondary-raw-transparent": "240, 12%, 48%, .5",
+    "danger": "0xFF5A5C",
+    "danger-default": "red"
+  }
+}

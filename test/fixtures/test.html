@@ -1,0 +1,58 @@
+<!-- HTML test fixture for Color Tracr -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Color Tracr HTML Test</title>
+
+    <style>
+      .local-btn {
+        background-color: #ff8e53;
+        color: white;
+        border: 1px solid var(--primary-color);
+      }
+
+      /* Hyphen Boundary Test */
+      /* Should NOT mark the color in the class name. */
+      .text-red-500 {
+        color: #ff2e31;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100 dark:bg-zinc-900 text-gray-900 dark:text-gray-100">
+    <!-- Tailwind Utilities -->
+    <!-- Should be marked if standard Tailwind CSS variables are available in the workspace. -->
+    <div
+      class="p-8 max-w-2xl mx-auto bg-white dark:bg-zinc-800 rounded-xl shadow-lg ring-1 ring-black/5">
+      <h1 class="text-3xl font-bold text-brand-blue mb-4">
+        <!-- Inline styles -->
+        <span style="color: crimson; border-bottom: 2px dashed #d270ff"> Color Tracr </span>
+      </h1>
+
+      <p class="text-gray-600 dark:text-gray-400 mb-6">
+        Testing Tailwind utility resolution. If `--color-brand-red` is defined in test.css, the
+        class below should be resolved to it.
+      </p>
+
+      <!-- Custom Tailwind variable class test -->
+      <button
+        class="px-4 py-2 bg-brand-red/60 hover:bg-brand-red/80 text-white rounded transition-colors">
+        Brand Button
+      </button>
+
+      <!-- Direct style attributes with hex, rgb, named -->
+      <div
+        style="
+          padding: 1rem;
+          margin-top: 2rem;
+          color: slateblue;
+          border: 1px solid rgba(0 0 0 / 0.1);
+          background: rgb(240, 248, 255);
+        ">
+        This box tests inline style parsing.
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,3 +1,75 @@
-# Color Trace<a href="#color-trace"><img align="right" width="36" src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/icon.svg?raw=true"></a>
+<span id="top" />
 
-Fast, readable web color highlighting in the editor.
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+
+### Fast, readable web color marking in the editor.
+
+This VS Code extension provides blazing fast color marking for modern web formats, including CSS variables, Tailwind classes, and wide-gamut colors.
+
+> <br>
+> 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
+> <br>
+> <br>
+
+<br>
+
+### **Enjoying this extension? Have suggestions?**
+
+Please consider leaving a review on the [**Visual Studio Marketplace**](https://marketplace.visualstudio.com/items?itemName=xulbux.color-tracr) or giving a ⭐ on [**GitHub**](https://github.com/xulbux/vscode-ext-color-tracr).
+
+<br>
+<br>
+
+<span id="features" />
+
+## Features 📋
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Feature</th>
+      <th align="left">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td align="left"><strong>Standard Colors</strong></td>
+      <td align="left">HEX, RGB, HSL, HWB, OKLCH, OKLAB</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Named Colors</strong></td>
+      <td align="left">Standard CSS color keywords (e.g., <code>red</code>, <code>transparent</code>, …)</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Tailwind CSS</strong></td>
+      <td align="left">Classes like <code>bg-red-500</code>, <code>text-blue-200/50</code>, <code>border-slate-900</code>, …</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Variable Tracing</strong></td>
+      <td align="left">Cross-file detection and marking of CSS variables (e.g., <code>var(--primary-color)</code>)</td>
+    </tr>
+  </tbody>
+</table>
+
+<br>
+<br>
+
+<span id="previews" />
+
+## Extension Previews ✨
+
+### CSS
+
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
+
+### TypeScript
+
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
+
+<br>
+<br>
+<br>
+
+---
+
+✨ Always creating more cool stuff for you! ✨ —⠀[**XulbuX**](https://github.com/xulbux)

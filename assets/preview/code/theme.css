@@ -1,0 +1,14 @@
+:root {
+  --primary: oklch(96.8% 0.007 247.896);
+  --secondary: hwb(220 56% 27%);
+  --accent: #9670ff;
+  --accent-dim: hsl(from var(--accent) h s calc(l - 10%));
+  --glass: transparent;
+}
+
+.modern-card {
+  color: var(--primary);
+  border: 2px solid var(--secondary, crimson);
+  background-color: var(--accent-dim);
+  box-shadow: 0 4px 12px var(--accent);
+}
