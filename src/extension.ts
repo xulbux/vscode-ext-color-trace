@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import { readConfig } from '@/config';
+import { invalidateConfigCache, readConfig, resolveEditorBackground } from '@/config';
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, disposeAll } from '@/core/decorationManager';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
@@ -26,7 +26,7 @@ const PROVIDER_WARMUP_DELAY = 2000;
 
 function triggerScan(editor: vscode.TextEditor, config: ReturnType<typeof readConfig>): void {
   scanEditor(editor, {
-    editorBg: config.editorBackground,
+    editorBg: resolveEditorBackground(),
     ignorePatterns: config.ignorePatterns,
     matchNamed: config.highlightNamedColors,
     matchTailwind: config.highlightTailwind,
@@ -35,15 +35,19 @@ function triggerScan(editor: vscode.TextEditor, config: ReturnType<typeof readCo
   });
 }
 
+function scanAllVisible(config: ReturnType<typeof readConfig>): void {
+  for (const editor of vscode.window.visibleTextEditors) {
+    triggerScan(editor, config);
+  }
+}
+
 export function activate(context: vscode.ExtensionContext): void {
   let config = readConfig();
 
   // --- Initial scan ---
   if (config.enable) {
     // [1] Instantly scan visible editors (they might only have local colors).
-    for (const editor of vscode.window.visibleTextEditors) {
-      triggerScan(editor, config);
-    }
+    scanAllVisible(config);
 
     // [2] Scan workspace for CSS variables in the background, then re-scan visible editors.
     vscode.workspace
@@ -64,17 +68,13 @@ export function activate(context: vscode.ExtensionContext): void {
         await Promise.all(promises);
 
         clearCache();
-        for (const editor of vscode.window.visibleTextEditors) {
-          triggerScan(editor, config);
-        }
+        scanAllVisible(config);
       });
 
     // [3] Re-scan after a short delay so DocumentColorProviders have time to initialize.
     setTimeout(() => {
       clearCache();
-      for (const editor of vscode.window.visibleTextEditors) {
-        triggerScan(editor, config);
-      }
+      scanAllVisible(config);
     }, PROVIDER_WARMUP_DELAY);
   }
 
@@ -138,13 +138,12 @@ export function activate(context: vscode.ExtensionContext): void {
         event.affectsConfiguration('colorTrace') ||
         event.affectsConfiguration('workbench.colorCustomizations')
       ) {
+        invalidateConfigCache();
         config = readConfig();
         clearCache();
 
         if (config.enable) {
-          for (const editor of vscode.window.visibleTextEditors) {
-            triggerScan(editor, config);
-          }
+          scanAllVisible(config);
         } else {
           // Extension disabled; Remove all decorations
           for (const editor of vscode.window.visibleTextEditors) {
@@ -158,13 +157,12 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Color theme changed; BG color may differ ---
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
+      invalidateConfigCache();
       config = readConfig();
       clearCache();
 
       if (config.enable) {
-        for (const editor of vscode.window.visibleTextEditors) {
-          triggerScan(editor, config);
-        }
+        scanAllVisible(config);
       }
     })
   );
@@ -177,9 +175,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
 
       clearCache();
-      for (const editor of vscode.window.visibleTextEditors) {
-        triggerScan(editor, config);
-      }
+      scanAllVisible(config);
     })
   );
 }

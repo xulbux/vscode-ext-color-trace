@@ -128,15 +128,3 @@ export function rgbaToHexString(rgba: RGBA): string {
   const base = `#${toHex(rgba.r)}${toHex(rgba.g)}${toHex(rgba.b)}`;
   return rgba.a >= 1 ? base : `${base}${toHex(Math.round(rgba.a * 255))}`;
 }
-
-/**
- * Convert RGBA to a CSS color string.
- * @returns  `rgb(r, g, b)` when fully opaque, `rgba(r, g, b, a)` otherwise.
- */
-export function rgbaToCssString(rgba: RGBA): string {
-  const r = Math.round(rgba.r);
-  const g = Math.round(rgba.g);
-  const b = Math.round(rgba.b);
-
-  return rgba.a >= 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${rgba.a})`;
-}

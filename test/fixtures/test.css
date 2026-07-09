@@ -52,7 +52,7 @@
 /* Should NOT highlight the color in the class name. */
 
 .btn-red {
-  background: var(--color-brand-red);
+  background: var(--color-brand-red, red);
 }
 
 .text-blue-500 {

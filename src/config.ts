@@ -43,7 +43,7 @@ function getEditorBackgroundHex(): string {
 /**
  * Resolve the editor background through the three-step fallback chain.
  */
-function resolveEditorBackground(): RGBA {
+export function resolveEditorBackground(): RGBA {
   const hex = getEditorBackgroundHex();
   return hexStrategy.extract(hex)?.rgba ?? DEFAULT_DARK;
 }
@@ -58,7 +58,17 @@ function resolveEditorBackground(): RGBA {
  * 2.  `colorTrace.editorBackground` (user setting)
  * 3.  Auto-detect from the active color theme kind
  */
+let cachedConfig: ExtensionConfig | undefined = undefined;
+
+export function invalidateConfigCache(): void {
+  cachedConfig = undefined;
+}
+
 export function readConfig(): ExtensionConfig {
+  if (cachedConfig) {
+    return cachedConfig;
+  }
+
   const cfg = vscode.workspace.getConfiguration('colorTrace');
 
   return {
@@ -68,11 +78,4 @@ export function readConfig(): ExtensionConfig {
     highlightTailwind: cfg.get<boolean>('highlightTailwind', true),
     ignorePatterns: cfg.get<string[]>('ignorePatterns', []),
   };
-}
-
-/**
- * Convenience helper; Returns only the resolved editor background color.
- */
-export function getEditorBackground(): RGBA {
-  return readConfig().editorBackground;
 }

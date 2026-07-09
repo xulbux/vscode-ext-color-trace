@@ -25,8 +25,6 @@ function rangeKey(range: vscode.Range): string {
   return `${range.start.line}:${range.start.character}-${range.end.line}:${range.end.character}`;
 }
 
-// filterToVisible removed.
-
 /**
  * Merge regex-based matches with provider matches.
  * Provider results take priority (they come from language servers with semantic understanding).
@@ -43,26 +41,27 @@ function mergeMatches(
 
   // [1] Regex matches first. They have highly accurate ranges (e.g. strict hex bounds).
   // If they overlap with a provider match, we use OUR precise range, but inherit
-  // the provider's semantically resolved RGBA value (useful for CSS vars).
   for (const match of regexMatches) {
-    const absStart = options.rangeOffset + match.startOffset;
-    const absEnd = options.rangeOffset + match.endOffset;
-    const range = new vscode.Range(
-      options.doc.positionAt(absStart),
-      options.doc.positionAt(absEnd)
-    );
-
-    let finalColor = match.color;
+    const finalColor = match.color;
 
     // Check for overlap with any provider match.
+    // We trust our own regex parsers and variable cache more than potentially buggy
+    // language servers (which sometimes return dummy colors like yellow for unresolved vars).
+    const absStart = match.startOffset;
+    const absEnd = match.endOffset;
     const pmIndex = providerMatches.findIndex(
       (p) => absStart < p.endOffset && absEnd > p.startOffset
     );
 
     if (pmIndex !== -1) {
-      finalColor = providerMatches[pmIndex].color;
+      // Discard the provider match since we already handled this color perfectly.
       consumedProviders.add(pmIndex);
     }
+
+    const range = new vscode.Range(
+      options.doc.positionAt(absStart),
+      options.doc.positionAt(absEnd)
+    );
 
     if (options.scanRange.contains(range)) {
       const key = rangeKey(range);
@@ -109,7 +108,7 @@ function mergeMatches(
  *
  * @param editor        The text editor to scan.
  * @param editorBg      The resolved editor background RGBA.
- * @param borderRadius  CSS border-radius for highlights.
+
  * @param matchNamed    Whether to match named CSS colors.
  */
 export async function scanEditor(
@@ -139,7 +138,6 @@ export async function scanEditor(
 
   const lastLine = doc.lineCount - 1;
   const scanRange = new vscode.Range(0, 0, lastLine, doc.lineAt(lastLine).text.length);
-  const rangeOffset = 0;
 
   // [2] Regex-based extraction.
   clearVariablesForUri(uri);
@@ -153,7 +151,7 @@ export async function scanEditor(
   const providerMatches = await getProviderColors(doc);
 
   // [4] Merge & deduplicate.
-  const merged = mergeMatches(regexMatches, providerMatches, { doc, rangeOffset, scanRange });
+  const merged = mergeMatches(regexMatches, providerMatches, { doc, rangeOffset: 0, scanRange });
 
   // [5] Cache full results.
   cache.set(uri, { results: merged, version });

@@ -4,7 +4,10 @@
  *
  * @see  https://www.w3.org/TR/css-color-4/#named-colors
  */
-export const NAMED_COLORS = new Map<string, [number, number, number]>([
+export const NAMED_COLORS: ReadonlyMap<string, [number, number, number]> = new Map<
+  string,
+  [number, number, number]
+>([
   ['aliceblue', [240, 248, 255]],
   ['antiquewhite', [250, 235, 215]],
   ['aqua', [0, 255, 255]],
@@ -160,14 +163,20 @@ export const NAMED_COLORS = new Map<string, [number, number, number]>([
  * VS Code language IDs in which CSS named-color keywords
  * should be matched unconditionally (the entire file is CSS).
  */
-export const PURE_CSS_LANGUAGES = new Set<string>(['css', 'less', 'sass', 'scss', 'stylus']);
+export const PURE_CSS_LANGUAGES: ReadonlySet<string> = new Set<string>([
+  'css',
+  'less',
+  'sass',
+  'scss',
+  'stylus',
+]);
 
 /**
  * VS Code language IDs where CSS can appear embedded (inside `<style>` blocks or `style="…"` attributes).
  * Named colors are matched here too, but only when the word is NOT adjacent to a hyphen
  * (to avoid false positives like `text-red` or `bg-red-08` in Tailwind / utility class names).
  */
-export const MIXED_CSS_LANGUAGES = new Set<string>([
+export const MIXED_CSS_LANGUAGES: ReadonlySet<string> = new Set<string>([
   'astro',
   'ejs',
   'erb',

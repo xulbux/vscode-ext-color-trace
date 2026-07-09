@@ -1,8 +1,8 @@
 /**
  * Regex-based color extraction from text.
  *
- * Matches hex, rgb/rgba, hsl/hsla, hwb, and (optionally) named CSS colors.
- * Each match is converted to an RGBA value for downstream use.
+ * Matches diverse color formats.
+ * Each match is converted to a `ColorData` object for downstream use.
  */
 
 import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/providers/namedColors';
@@ -21,6 +21,17 @@ const COLOR_RE = new RegExp(`(${strategies.map((s) => s.pattern).join('|')})`, '
 /** Word regex for named color lookup (letters only, 3-30 chars to skip noise). */
 const WORD_RE = /\b[a-zA-Z]{3,30}\b/g;
 
+/** Matches `var(--name)` and `var(--name, fallback)` but we only capture up to the name. */
+const VAR_USE_RE = /var\(\s*(?<name>--[a-zA-Z0-9-_]+)/g;
+
+/** Matches Tailwind CSS color utility classes. */
+const TAILWIND_PREFIXES =
+  'bg|text|border|ring|fill|stroke|shadow|outline|decoration|accent|caret|divide|placeholder|from|via|to';
+const CLASS_RE = new RegExp(
+  `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+)(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
+  'g'
+);
+
 // --------------------------------------- HELPERS ---------------------------------------
 
 /** Check if a range overlaps with any existing match. */
@@ -36,7 +47,7 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 // -------------------------------------- EXTRACTORS -------------------------------------
 
 function extractVariableUsages(text: string, results: ColorMatch[]): void {
-  const VAR_USE_RE = /var\(\s*(?<name>--[a-zA-Z0-9-_]+)\s*\)/g;
+  VAR_USE_RE.lastIndex = 0;
   let varMatch = VAR_USE_RE.exec(text);
 
   while (varMatch !== null) {
@@ -44,14 +55,14 @@ function extractVariableUsages(text: string, results: ColorMatch[]): void {
     if (varName) {
       const colorData = getVariable(varName);
       if (colorData) {
-        const offset = varMatch.index;
-        const end = offset + varMatch[0].length;
+        const offset = varMatch.index + varMatch[0].indexOf(varName);
+        const end = offset + varName.length;
 
         if (!rangeOverlaps(results, offset, end)) {
           results.push({
             color: colorData,
             endOffset: end,
-            originalText: varMatch[0],
+            originalText: varName,
             startOffset: offset,
           });
         }
@@ -73,13 +84,7 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
 }
 
 function extractTailwindClasses(text: string, results: ColorMatch[]): void {
-  const TAILWIND_PREFIXES =
-    'bg|text|border|ring|fill|stroke|shadow|outline|decoration|accent|caret|divide|placeholder|from|via|to';
-  const CLASS_RE = new RegExp(
-    `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+)(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
-    'g'
-  );
-
+  CLASS_RE.lastIndex = 0;
   let classMatch = CLASS_RE.exec(text);
   while (classMatch !== null) {
     if (isValidTailwindBoundary(text, classMatch.index)) {

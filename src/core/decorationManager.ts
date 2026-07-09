@@ -10,11 +10,9 @@ import * as vscode from 'vscode';
 import type { ColorData, DecorationEntry, RGBA } from '@/types';
 import { alphaBlend, relativeLuminance, rgbaToHexString } from '@/utils/color';
 
-// ---------------------------------------- TYPES ----------------------------------------
-
 // ---------------------------------------- CACHE ----------------------------------------
 
-const LRU_CAPACITY = 256;
+const LRU_CAPACITY = 4096;
 
 /** LRU cache: style fingerprint → DecorationEntry. */
 const cache = new Map<string, DecorationEntry>();

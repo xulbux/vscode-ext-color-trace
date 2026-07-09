@@ -30,15 +30,9 @@ export const oklchStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
-    const lower = matchText.toLowerCase();
-
     // We only extract L to build a rough grayscale RGBA fallback for contrast checking.
     // The native CSS string is used for the actual colored background.
     const l = parseL(tokens[0]);
-
-    if (lower.startsWith('lab') || lower.startsWith('lch')) {
-      // Lab/LCH lightness is typically 0-100, so we pass it raw and the approx function normalizes it.
-    }
 
     const { r, g, b } = approximateRgbFromL(l);
     const a = clampAlpha(parseAlpha(tokens[3]));

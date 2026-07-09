@@ -15,4 +15,4 @@ class Theme:
     BACKGROUND_INT = 0x1E1E1E
 
     def get_styles(self):
-        return {"btn": "bg-[#f00] text-white", "error": "red"}
+        return {"btn": "bg-[#F00] text-white", "error": "red"}
