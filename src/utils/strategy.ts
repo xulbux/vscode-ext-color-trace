@@ -1,10 +1,22 @@
-/** Numeric value: integer or decimal, optionally a percentage */
+/** Numeric value: integer or decimal, optionally a percentage. */
 export const NUM = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
 
-/** Alpha value: number or percentage */
+/** Numeric value without percentage. */
+export const NUM_NO_PERCENT = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`;
+
+/** Percentage value: must end with `%`. */
+export const PERCENT = String.raw`(?:\d+(?:\.\d+)?%|\.\d+%)`;
+
+/** Alpha value: number or percentage. */
 export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
 
-/** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`) */
+/** Negative lookbehind to ensure we don't start inside a number/word. */
+export const BOUNDARY_START = String.raw`(?<![a-zA-Z0-9_.%-])`;
+
+/** Negative lookahead to ensure we don't end inside a number/word/percent. */
+export const BOUNDARY_END = String.raw`(?![a-zA-Z0-9_.%-])`;
+
+/** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`). */
 export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?)`;
 
 /** Parse a numeric token as a 0-255 value or percentage. */

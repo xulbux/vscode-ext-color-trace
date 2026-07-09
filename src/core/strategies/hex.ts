@@ -1,7 +1,8 @@
-import type { ColorData, ColorParsingStrategy } from '@/types';
+import type { ColorData, ColorParsingStrategy, DocumentResolvedConfig } from '@/types';
 
 export function parseHex(
-  digits: string
+  digits: string,
+  useARGB = false
 ): { r: number; g: number; b: number; a: number } | undefined {
   let a = 1,
     r = 0,
@@ -21,11 +22,18 @@ export function parseHex(
     }
     case 6:
     case 8: {
-      r = Number.parseInt(digits.slice(0, 2), 16);
-      g = Number.parseInt(digits.slice(2, 4), 16);
-      b = Number.parseInt(digits.slice(4, 6), 16);
-      if (digits.length === 8) {
-        a = Number.parseInt(digits.slice(6, 8), 16) / 255;
+      if (useARGB && digits.length === 8) {
+        a = Number.parseInt(digits.slice(0, 2), 16) / 255;
+        r = Number.parseInt(digits.slice(2, 4), 16);
+        g = Number.parseInt(digits.slice(4, 6), 16);
+        b = Number.parseInt(digits.slice(6, 8), 16);
+      } else {
+        r = Number.parseInt(digits.slice(0, 2), 16);
+        g = Number.parseInt(digits.slice(2, 4), 16);
+        b = Number.parseInt(digits.slice(4, 6), 16);
+        if (digits.length === 8) {
+          a = Number.parseInt(digits.slice(6, 8), 16) / 255;
+        }
       }
       break;
     }
@@ -42,14 +50,14 @@ export function parseHex(
 }
 
 export const hexStrategy: ColorParsingStrategy = {
-  extract(matchText: string): ColorData | undefined {
+  extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
     const match = /^(?:#|0x)(?<hexDigits>[0-9a-f]{3,8})$/i.exec(matchText.trim());
     if (!match) {
       return undefined;
     }
     const { hexDigits: digits } = match.groups as { hexDigits: string };
 
-    const rgba = parseHex(digits);
+    const rgba = parseHex(digits, options?.useARGB);
     if (!rgba) {
       return undefined;
     }
@@ -61,7 +69,26 @@ export const hexStrategy: ColorParsingStrategy = {
       cssStr = `#${digits}`;
     }
 
-    return { css: cssStr, rgba };
+    if (options?.useARGB && digits.length === 8) {
+      const aa = digits.slice(0, 2);
+      const rrggbb = digits.slice(2, 8);
+      cssStr = `#${rrggbb}${aa}`;
+    }
+
+    let opaqueCss = '';
+    if (options?.useARGB && digits.length === 8) {
+      opaqueCss = `#${digits.slice(2, 8)}`;
+    } else {
+      let len = digits.length;
+      if (len === 4) {
+        len = 3;
+      } else if (len === 8) {
+        len = 6;
+      }
+      opaqueCss = `#${digits.slice(0, len)}`;
+    }
+
+    return { css: cssStr, opaqueCss, rgba };
   },
   id: 'hex',
   /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x...` equivalents */

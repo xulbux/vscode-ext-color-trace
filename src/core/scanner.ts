@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import { getProviderColors } from '@/providers/documentColorBridge';
-import type { CacheEntry, ColorData, ColorMatch, RGBA } from '@/types';
+import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
 import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
 import { clearVariablesForUri } from './variableManager';
@@ -101,32 +101,36 @@ function mergeMatches(
   return results;
 }
 
+import { resolveDocumentConfig } from '@/config';
+
 // -------------------------------------- PUBLIC API -------------------------------------
 
 /**
  * Scan the visible portions of an editor for colors and apply decorations.
  *
- * @param editor        The text editor to scan.
- * @param editorBg      The resolved editor background RGBA.
-
- * @param matchNamed    Whether to match named CSS colors.
+ * @param editor  The text editor to scan.
+ * @param config  The resolved extension configuration.
  */
 export async function scanEditor(
   editor: vscode.TextEditor,
-  options: { editorBg: RGBA; matchNamed: boolean; matchTailwind: boolean; ignorePatterns: string[] }
+  config: ExtensionConfig
 ): Promise<void> {
   const doc = editor.document;
 
-  if (options.ignorePatterns.some((pattern) => vscode.languages.match({ pattern }, doc) > 0)) {
+  const docConfig = resolveDocumentConfig(config, doc.languageId);
+
+  // [1] Check if this document should be skipped.
+  if (!docConfig.enable) {
     return;
   }
+
   const uri = doc.uri.toString();
   const { version } = doc;
 
   // Check cache; Skip if document hasn't changed.
   const cached = cache.get(uri);
   if (cached && cached.version === version) {
-    applyDecorations(editor, cached.results, { editorBg: options.editorBg });
+    applyDecorations(editor, cached.results, docConfig);
     return;
   }
 
@@ -141,14 +145,10 @@ export async function scanEditor(
 
   // [2] Regex-based extraction.
   clearVariablesForUri(uri);
-  const regexMatches = extractColors(text, doc.languageId, {
-    matchNamed: options.matchNamed,
-    matchTailwind: options.matchTailwind,
-    uri,
-  });
+  const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
 
   // [3] DocumentColorProvider bridge (async, non-blocking).
-  const providerMatches = await getProviderColors(doc);
+  const providerMatches = await getProviderColors(doc, docConfig);
 
   // [4] Merge & deduplicate.
   const merged = mergeMatches(regexMatches, providerMatches, { doc, rangeOffset: 0, scanRange });
@@ -157,7 +157,7 @@ export async function scanEditor(
   cache.set(uri, { results: merged, version });
 
   // [6] Apply decorations.
-  applyDecorations(editor, merged, { editorBg: options.editorBg });
+  applyDecorations(editor, merged, docConfig);
 }
 
 /**

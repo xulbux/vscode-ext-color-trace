@@ -7,7 +7,8 @@
  */
 
 import * as vscode from 'vscode';
-import type { ColorMatch } from '@/types';
+import { NAMED_COLORS } from '@/providers/namedColors';
+import type { ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 
 /**
@@ -16,7 +17,11 @@ import { extractTokens } from '@/utils/strategy';
  * @returns  `ColorMatch[]` derived from other extensions' color providers.
  *           Returns an empty array if no providers are available.
  */
-export async function getProviderColors(document: vscode.TextDocument): Promise<ColorMatch[]> {
+// oxlint-disable-next-line complexity
+export async function getProviderColors(
+  document: vscode.TextDocument,
+  options: DocumentResolvedConfig
+): Promise<ColorMatch[]> {
   try {
     const colors = await vscode.commands.executeCommand<vscode.ColorInformation[]>(
       'vscode.executeDocumentColorProvider',
@@ -54,6 +59,22 @@ export async function getProviderColors(document: vscode.TextDocument): Promise<
         }
       }
 
+      if (isValid && !options.highlightNamedColors) {
+        if (NAMED_COLORS.has(originalText.toLowerCase())) {
+          isValid = false;
+        }
+      }
+
+      if (isValid && !options.highlightTailwind) {
+        if (
+          originalText.includes('-') &&
+          !originalText.includes('(') &&
+          !originalText.startsWith('--')
+        ) {
+          isValid = false;
+        }
+      }
+
       if (isValid) {
         // VS Code's Color uses 0-1 for all channels.
         const rgba = {
@@ -63,7 +84,13 @@ export async function getProviderColors(document: vscode.TextDocument): Promise<
           r: Math.round(info.color.red * 255),
         };
 
-        matches.push({ color: { css: originalText, rgba }, endOffset, originalText, startOffset });
+        const opaqueCss = `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
+        matches.push({
+          color: { css: originalText, opaqueCss, rgba },
+          endOffset,
+          originalText,
+          startOffset,
+        });
       }
     }
 

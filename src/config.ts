@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { hexStrategy } from '@/core/strategies/hex';
-import type { ExtensionConfig, RGBA } from '@/types';
+import type { DocumentResolvedConfig, ExtensionConfig, RGBA } from '@/types';
 
 // ----------------------------------- INTERNAL HELPERS ----------------------------------
 
@@ -71,11 +71,54 @@ export function readConfig(): ExtensionConfig {
 
   const cfg = vscode.workspace.getConfiguration('colorTrace');
 
-  return {
+  cachedConfig = {
     editorBackground: resolveEditorBackground(),
-    enable: cfg.get<boolean>('enable', true),
-    highlightNamedColors: cfg.get<boolean>('highlightNamedColors', true),
-    highlightTailwind: cfg.get<boolean>('highlightTailwind', true),
-    ignorePatterns: cfg.get<string[]>('ignorePatterns', []),
+    enable: cfg.get<string[]>('enable', ['*']),
+    highlightNamedColors: cfg.get<string[]>('highlightNamedColors', [
+      'css',
+      'scss',
+      'sass',
+      'less',
+      'html',
+      'vue',
+      'svelte',
+      'javascriptreact',
+      'typescriptreact',
+    ]),
+    highlightTailwind: cfg.get<string[]>('highlightTailwind', ['*']),
+    markerType: cfg.get<'highlight' | 'dot-before' | 'dot-after'>('markerType', 'highlight'),
+    matchHslWithNoFunction: cfg.get<string[]>('matchHslWithNoFunction', []),
+    matchRgbWithNoFunction: cfg.get<string[]>('matchRgbWithNoFunction', []),
+    showAlpha: cfg.get<boolean>('showAlpha', true),
+    useARGB: cfg.get<string[]>('useARGB', []),
+  };
+
+  return cachedConfig;
+}
+
+export function isLanguageEnabled(languageId: string, languages: string[]): boolean {
+  if (languages.length === 0) {
+    return false;
+  }
+  if (languages.includes('*')) {
+    return !languages.includes(`!${languageId}`);
+  }
+  return languages.includes(languageId);
+}
+
+export function resolveDocumentConfig(
+  config: ExtensionConfig,
+  languageId: string
+): DocumentResolvedConfig {
+  return {
+    editorBackground: config.editorBackground,
+    enable: isLanguageEnabled(languageId, config.enable),
+    highlightNamedColors: isLanguageEnabled(languageId, config.highlightNamedColors),
+    highlightTailwind: isLanguageEnabled(languageId, config.highlightTailwind),
+    markerType: config.markerType,
+    matchHslWithNoFunction: isLanguageEnabled(languageId, config.matchHslWithNoFunction),
+    matchRgbWithNoFunction: isLanguageEnabled(languageId, config.matchRgbWithNoFunction),
+    showAlpha: config.showAlpha,
+    useARGB: isLanguageEnabled(languageId, config.useARGB),
   };
 }

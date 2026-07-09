@@ -40,7 +40,10 @@ export const oklchStrategy: ColorParsingStrategy = {
     const { r, g, b } = approximateRgbFromL(l);
     const a = clampAlpha(parseAlpha(tokens[3]));
 
-    return { css: matchText.replace('°', 'deg'), rgba: { a, b, g, r } };
+    const cssStr = matchText.replace('°', 'deg');
+    const opaqueCss = cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+
+    return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },
   id: 'oklch',
   pattern: String.raw`(?:oklch|lch|oklab|lab)\(\s*${NUM}\s+${NUM}\s+${HUE}(?:\s*/\s*${ALPHA})?\s*\)`,

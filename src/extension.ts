@@ -7,11 +7,12 @@
  */
 
 import * as vscode from 'vscode';
-import { invalidateConfigCache, readConfig, resolveEditorBackground } from '@/config';
+import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/config';
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, disposeAll } from '@/core/decorationManager';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
 import { clearVariablesForUri } from '@/core/variableManager';
+import type { ExtensionConfig } from '@/types';
 
 // ---------------------------------------- STATE ----------------------------------------
 
@@ -24,13 +25,8 @@ const PROVIDER_WARMUP_DELAY = 2000;
 
 // -------------------------------------- ACTIVATION -------------------------------------
 
-function triggerScan(editor: vscode.TextEditor, config: ReturnType<typeof readConfig>): void {
-  scanEditor(editor, {
-    editorBg: resolveEditorBackground(),
-    ignorePatterns: config.ignorePatterns,
-    matchNamed: config.highlightNamedColors,
-    matchTailwind: config.highlightTailwind,
-  }).catch(() => {
+function triggerScan(editor: vscode.TextEditor, config: ExtensionConfig): void {
+  scanEditor(editor, config).catch(() => {
     // Ignore scan errors to satisfy no-console.
   });
 }
@@ -64,8 +60,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 const uriStr = uri.toString();
                 clearVariablesForUri(uriStr);
                 extractColors(text, 'css', {
-                  matchNamed: false,
-                  matchTailwind: false,
+                  ...resolveDocumentConfig(config, 'css'),
                   uri: uriStr,
                 });
               } catch {

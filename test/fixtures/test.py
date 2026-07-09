@@ -1,6 +1,6 @@
 # Python test fixture for Color Trace
 
-# Named colors (like 'red' or 'tomato') shouldn't highlight here since it's not a
+# Named colors (like `red` or `tomato`) shouldn't highlight here since it's not a
 # CSS language, but standard hex and rgb values should highlight perfectly.
 
 

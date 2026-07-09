@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { ColorData, DecorationEntry, RGBA } from '@/types';
+import type { ColorData, DecorationEntry, DocumentResolvedConfig } from '@/types';
 import { alphaBlend, relativeLuminance, rgbaToHexString } from '@/utils/color';
 
 // ---------------------------------------- CACHE ----------------------------------------
@@ -27,35 +27,43 @@ const editorStyleKeys = new Map<string, Set<string>>();
  * Format: `bg:<css>|fg:<hex>|border:<css>|outline:<css>`
  *
  * @param color       The highlight color data containing native CSS string and RGBA fallback.
- * @param editorBg    The editor background color (for contrast calculations).
+ * @param options     The extension configuration.
  * @param outlineCss  The statically calculated outline CSS.
  */
-function styleFingerprint(color: ColorData, editorBg: RGBA, outlineCss: string): string {
-  // If the highlight is semi-transparent, blend it over the editor background first
-  const { rgba } = color;
-  const solid = rgba.a < 1 ? alphaBlend(rgba, editorBg) : rgba;
+function styleFingerprint(
+  color: ColorData,
+  options: DocumentResolvedConfig,
+  outlineCss: string
+): string {
+  // Respect the showAlpha setting.
+  const rgba = options.showAlpha ? color.rgba : { ...color.rgba, a: 1 };
+
+  // If the highlight is semi-transparent, blend it over the editor background first.
+  const solid = rgba.a < 1 ? alphaBlend(rgba, options.editorBackground) : rgba;
   const lum = relativeLuminance(solid.r, solid.g, solid.b);
   const fg = lum > 0.179 ? '#000000' : '#FFFFFF';
 
   // Always use the native CSS string for the actual background decoration, unless we need to force opacity for the border.
-  const bgCss = color.css;
+  // If showAlpha is false, use the pre-calculated opaqueCss instead of the native CSS string.
+  const bgCss = options.showAlpha ? color.css : color.opaqueCss;
   const isTransparent = rgba.a < 1;
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
   // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
   let borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
-  if (color.css.toLowerCase() === 'transparent') {
+  if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
     borderColor = 'transparent';
   }
 
-  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}`;
+  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}|type:${options.markerType}`;
 }
 
 function createEntry(fingerprint: string): DecorationEntry {
   let bg = 'transparent',
     fg = '#FFFFFF',
     borderColor: string | undefined = undefined,
-    outline: string | undefined = undefined;
+    outline: string | undefined = undefined,
+    type = 'highlight';
 
   for (const segment of fingerprint.split('|')) {
     const idx = segment.indexOf(':');
@@ -71,19 +79,34 @@ function createEntry(fingerprint: string): DecorationEntry {
         borderColor = val;
       } else if (key === 'outline') {
         outline = val;
+      } else if (key === 'type') {
+        type = val;
       }
     }
   }
 
-  const decoOptions: vscode.DecorationRenderOptions = {
-    backgroundColor: bg,
-    borderColor,
-    borderRadius: '0.25em',
-    borderStyle: 'solid',
-    borderWidth: '0.2em 0.06em',
-    color: fg,
-    outline,
-  };
+  let decoOptions: vscode.DecorationRenderOptions = { backgroundColor: 'transparent' };
+
+  if (type === 'dot-before' || type === 'dot-after') {
+    const shadowColor = outline ? outline.replace('1px solid ', '') : 'transparent';
+    const dot = {
+      backgroundColor: bg,
+      contentText: '\u200a',
+      margin: type === 'dot-before' ? '0 0.25em 0 0.1em' : '0 0.1em 0 0.25em',
+      textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.9em; height: 0.9em; vertical-align: middle; transform: translateY(-8%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
+    };
+    decoOptions = type === 'dot-before' ? { before: dot } : { after: dot };
+  } else {
+    decoOptions = {
+      backgroundColor: bg,
+      borderColor,
+      borderRadius: '0.25em',
+      borderStyle: 'solid',
+      borderWidth: '0.2em 0.06em',
+      color: fg,
+      outline,
+    };
+  }
 
   return {
     activeEditors: new Set(),
@@ -122,14 +145,14 @@ function editorKey(editor: vscode.TextEditor): string {
  * Groups the supplied color matches by computed visual style, creates or reuses
  * cached TextEditorDecorationTypes, and applies them in one batch per unique style.
  *
- * @param editor    The editor to decorate.
- * @param matches   Color matches with resolved RGBA and document ranges.
- * @param editorBg  The editor background color (for contrast calculations).
+ * @param editor   The editor to decorate.
+ * @param matches  Color matches with resolved RGBA and document ranges.
+ * @param config   The resolved extension configuration.
  */
 export function applyDecorations(
   editor: vscode.TextEditor,
   matches: { range: vscode.Range; color: ColorData }[],
-  options: { editorBg: RGBA }
+  config: DocumentResolvedConfig
 ): void {
   const editorId = editorKey(editor);
 
@@ -137,12 +160,16 @@ export function applyDecorations(
   const groups = new Map<string, vscode.Range[]>();
 
   // Calculate static outline CSS once for the whole file scan based on editor bg.
-  const editorLum = relativeLuminance(options.editorBg.r, options.editorBg.g, options.editorBg.b);
+  const editorLum = relativeLuminance(
+    config.editorBackground.r,
+    config.editorBackground.g,
+    config.editorBackground.b
+  );
   const outlineCss =
-    editorLum > 0.179 ? '1px solid rgb(0 0 0 / 0.10)' : '1px solid rgb(255 255 255 / 0.16)';
+    editorLum > 0.179 ? '1px solid rgb(0 0 0 / 0.1)' : '1px solid rgb(255 255 255 / 0.16)';
 
   for (const { range, color } of matches) {
-    const key = styleFingerprint(color, options.editorBg, outlineCss);
+    const key = styleFingerprint(color, config, outlineCss);
 
     let ranges = groups.get(key);
     if (!ranges) {

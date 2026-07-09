@@ -25,7 +25,10 @@ export const hwbStrategy: ColorParsingStrategy = {
 
     const [r, g, b] = hwbToRgb(h, w, bk);
 
-    return { css: matchText.replace('°', 'deg'), rgba: { a, b, g, r } };
+    const cssStr = matchText.replace('°', 'deg');
+    const opaqueCss = cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+
+    return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },
   id: 'hwb',
   pattern: String.raw`hwb\(\s*${HUE}\s+${NUM}\s+${NUM}(?:\s*/\s*${ALPHA})?\s*\)`,

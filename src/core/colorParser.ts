@@ -6,17 +6,11 @@
  */
 
 import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/providers/namedColors';
-import type { ColorData, ColorMatch } from '@/types';
+import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { strategies } from './strategies';
 import { getVariable, setVariable } from './variableManager';
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
-
-/**
- * Combined regex that matches any supported color literal in a single pass.
- * Named colors are matched separately (word-boundary lookup against the Map).
- */
-const COLOR_RE = new RegExp(`(${strategies.map((s) => s.pattern).join('|')})`, 'gi');
 
 /** Word regex for named color lookup (letters only, 3-30 chars to skip noise). */
 const WORD_RE = /\b[a-zA-Z]{3,30}\b/g;
@@ -108,6 +102,7 @@ function extractTailwindClasses(text: string, results: ColorMatch[]): void {
               const newRgba = { ...colorData.rgba, a: colorData.rgba.a * alphaValue };
               colorData = {
                 css: `rgb(${newRgba.r} ${newRgba.g} ${newRgba.b} / ${newRgba.a})`,
+                opaqueCss: `rgb(${newRgba.r} ${newRgba.g} ${newRgba.b})`,
                 rgba: newRgba,
               };
             }
@@ -149,6 +144,7 @@ function extractNamedColors(text: string, languageId: string, results: ColorMatc
           results.push({
             color: {
               css: wordMatch[0],
+              opaqueCss: word === 'transparent' ? '#000000' : wordMatch[0],
               rgba: { a: word === 'transparent' ? 0 : 1, b: rgb[2], g: rgb[1], r: rgb[0] },
             },
             endOffset: end,
@@ -172,15 +168,27 @@ function extractNamedColors(text: string, languageId: string, results: ColorMatc
 export function extractColors(
   text: string,
   languageId: string,
-  options: { matchNamed: boolean; matchTailwind: boolean; uri: string }
+  options: DocumentResolvedConfig & { uri?: string }
 ): ColorMatch[] {
   const results: ColorMatch[] = [];
 
+  // Rebuild the regex dynamically if we need optional patterns.
+  // The strategies provide `getPatterns(options)` to return an array of regex string parts.
+  const patterns: string[] = [];
+  for (const strategy of strategies) {
+    if (strategy.getPatterns) {
+      patterns.push(...strategy.getPatterns(options));
+    } else {
+      patterns.push(strategy.pattern);
+    }
+  }
+  const colorRe = new RegExp(`(${patterns.join('|')})`, 'gi');
+
   // [1] Functional and hexa colors (all languages)
-  for (const match of text.matchAll(COLOR_RE)) {
+  for (const match of text.matchAll(colorRe)) {
     let colorData: ColorData | undefined = undefined;
     for (const strategy of strategies) {
-      colorData = strategy.extract(match[0]);
+      colorData = strategy.extract(match[0], options);
       if (colorData) {
         break;
       }
@@ -191,7 +199,7 @@ export function extractColors(
       const prefix = text.slice(Math.max(0, match.index - 100), match.index);
       const defMatch = prefix.match(/(?<name>--[a-zA-Z0-9-_]+)\s*:\s*$/);
       if (defMatch?.groups) {
-        setVariable(defMatch.groups.name, colorData, options.uri);
+        setVariable(defMatch.groups.name, colorData, options.uri ?? '');
       }
 
       results.push({
@@ -207,12 +215,12 @@ export function extractColors(
   extractVariableUsages(text, results);
 
   // [3] Tailwind Classes
-  if (options.matchTailwind) {
+  if (options.highlightTailwind) {
     extractTailwindClasses(text, results);
   }
 
   // [4] Named CSS colors
-  if (options.matchNamed) {
+  if (options.highlightNamedColors) {
     extractNamedColors(text, languageId, results);
   }
 

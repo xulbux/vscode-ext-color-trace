@@ -4,6 +4,7 @@ fn main() {
     let brand_color = "#9670FF";
     let dark_mode_bg = "rgb(25, 15, 42)";
     let transparent_white = "rgba(255, 255, 255, 0.1)";
+    let transparent_alt_white = "argb(0.1, 255, 255, 255)";
 
     // Named colors like red or green shouldn't highlight in Rust.
     let name = "red";

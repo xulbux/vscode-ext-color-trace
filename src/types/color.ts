@@ -7,18 +7,23 @@ export interface RGBA {
 }
 
 export interface ColorData {
-  /** The native CSS string used to style the highlight (e.g. `oklch(60% 0.1 250)`) */
+  /** The native CSS string used to style the highlight (e.g. `oklch(60% 0.1 250)`). */
   css: string;
-  /** RGBA approximation used to calculate text foreground contrast */
+  /** RGBA approximation used to calculate text foreground contrast. */
   rgba: RGBA;
+  /** The native CSS string, but fully opaque, used when showAlpha is false. */
+  opaqueCss: string;
 }
+
+import type { DocumentResolvedConfig } from './config';
 
 export interface ColorParsingStrategy {
   id: string;
   /** The regex source string without capture groups that might conflict, or a non-capturing pattern. */
   pattern: string;
+  getPatterns?: (options?: DocumentResolvedConfig) => string[];
   /** Parses the matched string into ColorData. */
-  extract: (matchText: string) => ColorData | undefined;
+  extract: (matchText: string, options?: DocumentResolvedConfig) => ColorData | undefined;
 }
 
 /** A color found in a text document. */

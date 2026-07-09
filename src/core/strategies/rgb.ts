@@ -1,7 +1,10 @@
-import type { ColorData, ColorParsingStrategy } from '@/types';
+import type { ColorData, ColorParsingStrategy, DocumentResolvedConfig } from '@/types';
 import {
   ALPHA,
   NUM,
+  NUM_NO_PERCENT,
+  BOUNDARY_START,
+  BOUNDARY_END,
   clampAlpha,
   clampChannel,
   parseAlpha,
@@ -11,22 +14,77 @@ import {
 import { parseHex } from './hex';
 
 export const rgbStrategy: ColorParsingStrategy = {
-  extract(matchText: string): ColorData | undefined {
-    const tokens = parseColorTokens(matchText, ['rgb'], { minTokens: 1 });
+  // oxlint-disable-next-line complexity
+  extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
+    let r = 0,
+      g = 0,
+      b = 0,
+      a = 1;
+    const lower = matchText.trim().toLowerCase();
+
+    // Check if it's a raw match (no function wrapper).
+    if (
+      !lower.startsWith('rgb') &&
+      !lower.startsWith('argb') &&
+      !lower.startsWith('#') &&
+      !lower.startsWith('0x')
+    ) {
+      if (!options?.matchRgbWithNoFunction) {
+        return undefined;
+      }
+      const tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+      if (tokens.length < 3) {
+        return undefined;
+      }
+      if (tokens.slice(0, 3).some((t) => t.includes('%'))) {
+        return undefined;
+      }
+      r = clampChannel(parseChannel(tokens[0]));
+      g = clampChannel(parseChannel(tokens[1]));
+      b = clampChannel(parseChannel(tokens[2]));
+      a = clampAlpha(parseAlpha(tokens[3]));
+
+      if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
+        return undefined;
+      }
+
+      const opaqueCss = `rgb(${r}, ${g}, ${b})`;
+      return { css: `rgba(${r}, ${g}, ${b}, ${a})`, opaqueCss, rgba: { a, b, g, r } };
+    }
+
+    const tokens = parseColorTokens(matchText, ['rgb', 'argb'], { minTokens: 1 });
     if (!tokens) {
       return undefined;
     }
 
     if (tokens.length === 1) {
-      // Hyprland-style `rgb(HEX)` or `rgba(HEXA)`
+      // Hyprland-style `rgb(HEX)` or `rgba(HEXA)`.
       const [hexStr] = tokens;
       const hexLen = hexStr.length;
       if (hexLen === 3 || hexLen === 4 || hexLen === 6 || hexLen === 8) {
         if (/^[0-9A-F]+$/i.test(hexStr)) {
-          const rgba = parseHex(hexStr);
+          const rgba = parseHex(hexStr, options?.useARGB);
           if (rgba) {
             // Return a valid CSS hex string so the browser rendering engine doesn't reject it.
-            return { css: `#${hexStr}`, rgba };
+            let cssStr = `#${hexStr}`;
+            let opaqueCss = '';
+
+            if (options?.useARGB && hexLen === 8) {
+              const aa = hexStr.slice(0, 2);
+              const rrggbb = hexStr.slice(2, 8);
+              cssStr = `#${rrggbb}${aa}`;
+              opaqueCss = `#${rrggbb}`;
+            } else {
+              let len = hexLen;
+              if (len === 4) {
+                len = 3;
+              } else if (len === 8) {
+                len = 6;
+              }
+              opaqueCss = `#${hexStr.slice(0, len)}`;
+            }
+
+            return { css: cssStr, opaqueCss, rgba };
           }
         }
       }
@@ -37,13 +95,45 @@ export const rgbStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
-    const r = clampChannel(parseChannel(tokens[0]));
-    const g = clampChannel(parseChannel(tokens[1]));
-    const b = clampChannel(parseChannel(tokens[2]));
-    const a = clampAlpha(parseAlpha(tokens[3]));
+    if (lower.startsWith('argb')) {
+      // argb(A, R, G, B) where A is usually 0-255 or 0-1
+      const alphaVal = parseChannel(tokens[0]);
+      a = clampAlpha(
+        tokens[0].includes('%') || alphaVal <= 1 ? parseAlpha(tokens[0]) : alphaVal / 255
+      );
+      r = clampChannel(parseChannel(tokens[1]));
+      g = clampChannel(parseChannel(tokens[2]));
+      b = clampChannel(parseChannel(tokens[3]));
 
-    return { css: matchText, rgba: { a, b, g, r } };
+      if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
+        return undefined;
+      }
+
+      const opaqueCss = `rgb(${r}, ${g}, ${b})`;
+      return { css: `rgba(${r}, ${g}, ${b}, ${a})`, opaqueCss, rgba: { a, b, g, r } };
+    }
+
+    r = clampChannel(parseChannel(tokens[0]));
+    g = clampChannel(parseChannel(tokens[1]));
+    b = clampChannel(parseChannel(tokens[2]));
+    a = clampAlpha(parseAlpha(tokens[3]));
+
+    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
+      return undefined;
+    }
+
+    const opaqueCss = `rgb(${r}, ${g}, ${b})`;
+    return { css: matchText, opaqueCss, rgba: { a, b, g, r } };
+  },
+  getPatterns(options?: DocumentResolvedConfig): string[] {
+    const patterns = [this.pattern];
+    if (options?.matchRgbWithNoFunction) {
+      patterns.push(
+        String.raw`${BOUNDARY_START}${NUM_NO_PERCENT}\s*[, \t]\s*${NUM_NO_PERCENT}\s*[, \t]\s*${NUM_NO_PERCENT}(?:\s*[,/]\s*${ALPHA})?${BOUNDARY_END}`
+      );
+    }
+    return patterns;
   },
   id: 'rgb',
-  pattern: String.raw`rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9a-fA-F]{3,8}\s*)\)`,
+  pattern: String.raw`a?rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9a-fA-F]{3,8}\s*)\)`,
 };
