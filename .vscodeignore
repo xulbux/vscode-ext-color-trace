@@ -2,6 +2,7 @@
 
 .github/
 .vscode/
+assets/preview/
 node_modules/
 src/
 test/
@@ -9,6 +10,7 @@ test/
 .gitignore
 .oxfmtrc.json
 .oxlintrc.json
+assets/icon.svg
 esbuild.js
 pnpm-lock.yaml
 pnpm-workspace.yaml

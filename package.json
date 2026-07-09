@@ -2,19 +2,24 @@
   "name": "color-trace",
   "displayName": "Color Trace",
   "version": "1.0.0",
-  "description": "Fast, readable web color marking in the editor.",
+  "description": "Fast, readable color marking in the editor.",
   "categories": [
     "Other",
     "Visualization"
   ],
   "keywords": [
-    "accessible",
-    "color",
-    "fast",
-    "flexible",
-    "highlight",
-    "readable",
-    "xulbux"
+    "colors",
+    "css",
+    "hex",
+    "highlighting",
+    "hsl",
+    "markers",
+    "oklab",
+    "oklch",
+    "rgb",
+    "tailwind",
+    "variables",
+    "wide-gamut"
   ],
   "bugs": {
     "url": "https://github.com/xulbux/vscode-ext-color-trace/issues"
