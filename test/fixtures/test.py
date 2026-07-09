@@ -1,4 +1,4 @@
-# Python test fixture for Color Trace
+# Python test fixture for Color Tracr
 
 
 class Theme:

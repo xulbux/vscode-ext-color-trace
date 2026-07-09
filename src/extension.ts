@@ -1,5 +1,5 @@
 /**
- * Color Trace – VS Code Extension Entry Point
+ * Color Tracr – VS Code Extension Entry Point
  *
  * Activates after VS Code has finished loading (`onStartupFinished`),
  * wires up event listeners, and triggers the initial scan of all
@@ -142,7 +142,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
       if (
-        event.affectsConfiguration('colorTrace') ||
+        event.affectsConfiguration('colorTracr') ||
         event.affectsConfiguration('workbench.colorCustomizations')
       ) {
         invalidateConfigCache();

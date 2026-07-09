@@ -1,6 +1,6 @@
 <span id="top" />
 
-# Color Trace<a href="https://github.com/xulbux/vscode-ext-color-trace"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/icon.png?raw=true"></a>
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
 ### Fast, readable web color marking in the editor.
 
@@ -15,7 +15,7 @@ This VS Code extension provides blazing fast color marking for modern web format
 
 ### **Enjoying this extension? Have suggestions?**
 
-Please consider leaving a review on the [**Visual Studio Marketplace**](https://marketplace.visualstudio.com/items?itemName=xulbux.color-trace) or giving a ⭐ on [**GitHub**](https://github.com/xulbux/vscode-ext-color-trace).
+Please consider leaving a review on the [**Visual Studio Marketplace**](https://marketplace.visualstudio.com/items?itemName=xulbux.color-tracr) or giving a ⭐ on [**GitHub**](https://github.com/xulbux/vscode-ext-color-tracr).
 
 <br>
 <br>
@@ -60,11 +60,11 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 
 ### CSS
 
-<a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
 
 ### TypeScript
 
-<a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
 
 <br>
 <br>

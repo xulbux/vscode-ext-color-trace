@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="logo-color-trace" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 512 512">
+<svg id="logo-color-tracr" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 512 512">
   <metadata>
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
              xmlns:dc="http://purl.org/dc/elements/1.1/"
              xmlns:cc="http://creativecommons.org/ns#">
       <cc:Work rdf:about="">
-        <dc:title>Color Trace Logo</dc:title>
-        <dc:description>Logo for the Color Trace VS Code extension.</dc:description>
+        <dc:title>Color Tracr Logo</dc:title>
+        <dc:description>Logo for the Color Tracr VS Code extension.</dc:description>
         <dc:creator>
           <cc:Agent>
             <dc:title>XulbuX</dc:title>

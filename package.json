@@ -1,6 +1,6 @@
 {
-  "name": "color-trace",
-  "displayName": "Color Trace",
+  "name": "color-tracr",
+  "displayName": "Color Tracr",
   "version": "1.0.0",
   "description": "Fast, readable color marking in the editor.",
   "categories": [
@@ -18,11 +18,15 @@
     "oklch",
     "rgb",
     "tailwind",
+    "tracer",
+    "tracing",
+    "tracker",
+    "tracking",
     "variables",
     "wide-gamut"
   ],
   "bugs": {
-    "url": "https://github.com/xulbux/vscode-ext-color-trace/issues"
+    "url": "https://github.com/xulbux/vscode-ext-color-tracr/issues"
   },
   "license": "MIT",
   "author": {
@@ -34,7 +38,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/xulbux/vscode-ext-color-trace"
+    "url": "https://github.com/xulbux/vscode-ext-color-tracr"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/xulbux"
@@ -62,9 +66,9 @@
   },
   "contributes": {
     "configuration": {
-      "title": "Color Trace",
+      "title": "Color Tracr",
       "properties": {
-        "colorTrace.enable": {
+        "colorTracr.enable": {
           "type": "array",
           "items": {
             "type": "string"
@@ -72,9 +76,9 @@
           "default": [
             "*"
           ],
-          "description": "Language IDs where Color Trace is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
+          "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
         },
-        "colorTrace.markerType": {
+        "colorTracr.markerType": {
           "type": "string",
           "default": "highlight",
           "enum": [
@@ -84,17 +88,17 @@
           ],
           "description": "Style of the color marker."
         },
-        "colorTrace.showAlpha": {
+        "colorTracr.showAlpha": {
           "type": "boolean",
           "default": true,
           "description": "Whether to render color markers with their parsed transparency. If false, markers will always be fully opaque."
         },
-        "colorTrace.markNamedColors": {
+        "colorTracr.markNamedColors": {
           "type": "boolean",
           "default": true,
           "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
         },
-        "colorTrace.markTailwind": {
+        "colorTracr.markTailwind": {
           "type": "array",
           "items": {
             "type": "string"
@@ -104,7 +108,7 @@
           ],
           "description": "Mark Tailwind CSS color classes. Language IDs to mark. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
         },
-        "colorTrace.matchRgbWithNoFunction": {
+        "colorTracr.matchRgbWithNoFunction": {
           "type": "array",
           "items": {
             "type": "string"
@@ -112,7 +116,7 @@
           "default": [],
           "description": "Mark raw RGB numbers (e.g. `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to mark. Use `*` to enable for all."
         },
-        "colorTrace.matchHslWithNoFunction": {
+        "colorTracr.matchHslWithNoFunction": {
           "type": "array",
           "items": {
             "type": "string"
@@ -120,7 +124,7 @@
           "default": [],
           "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
         },
-        "colorTrace.useARGB": {
+        "colorTracr.useARGB": {
           "type": "array",
           "items": {
             "type": "string"

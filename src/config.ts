@@ -23,7 +23,7 @@ function defaultBackgroundForThemeKind(): string {
  * Return a hex color string for the editor background.
  *
  * 1.  Workspace `workbench.colorCustomizations` → `editor.background`
- * 2.  User-level `colorTrace.editorBackground`
+ * 2.  User-level `colorTracr.editorBackground`
  * 3.  Inferred from the active color theme kind
  */
 function getEditorBackgroundHex(): string {
@@ -51,11 +51,11 @@ export function resolveEditorBackground(): RGBA {
 // -------------------------------------- PUBLIC API -------------------------------------
 
 /**
- * Read all `colorTrace.*` settings and resolve the editor background color.
+ * Read all `colorTracr.*` settings and resolve the editor background color.
  *
  * Background resolution order:
  * 1.  `workbench.colorCustomizations["editor.background"]` (workspace)
- * 2.  `colorTrace.editorBackground` (user setting)
+ * 2.  `colorTracr.editorBackground` (user setting)
  * 3.  Auto-detect from the active color theme kind
  */
 let cachedConfig: ExtensionConfig | undefined = undefined;
@@ -69,7 +69,7 @@ export function readConfig(): ExtensionConfig {
     return cachedConfig;
   }
 
-  const cfg = vscode.workspace.getConfiguration('colorTrace');
+  const cfg = vscode.workspace.getConfiguration('colorTracr');
 
   cachedConfig = {
     editorBackground: resolveEditorBackground(),

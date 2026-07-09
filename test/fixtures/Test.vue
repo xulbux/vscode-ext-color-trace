@@ -1,4 +1,4 @@
-<!-- Vue test fixture for Color Trace -->
+<!-- Vue test fixture for Color Tracr -->
 
 <template>
   <div class="vue-test-component text-slate-800 dark:text-slate-200">

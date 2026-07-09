@@ -1,4 +1,4 @@
-// Rust test fixture for Color Trace
+// Rust test fixture for Color Tracr
 
 fn main() {
     let brand_color = "#9670FF";

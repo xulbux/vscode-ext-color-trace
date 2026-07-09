@@ -1,4 +1,4 @@
-// JavaScript test fixture for Color Trace
+// JavaScript test fixture for Color Tracr
 
 const COLORS = {
   ACCENT: 'hsl(281, 100%, 72%)',
