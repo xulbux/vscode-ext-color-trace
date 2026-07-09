@@ -1,16 +1,6 @@
 import * as vscode from 'vscode';
-import type { RGBA } from '@/core/colorUtils';
-import { parseHexColor } from '@/core/parsers';
-
-/**
- * Resolved extension configuration.
- */
-export interface ExtensionConfig {
-  enable: boolean;
-  editorBackground: RGBA;
-  highlightNamedColors: boolean;
-  borderRadius: string;
-}
+import { hexStrategy } from '@/core/strategies/hex';
+import type { ExtensionConfig, RGBA } from '@/types';
 
 // ----------------------------------- INTERNAL HELPERS ----------------------------------
 
@@ -36,8 +26,8 @@ function defaultBackgroundForThemeKind(): string {
  * 2.  User-level `colorTrace.editorBackground`
  * 3.  Inferred from the active color theme kind
  */
-function getEditorBackgroundHex(cfg: vscode.WorkspaceConfiguration): string {
-  // [1] Try workspace color customizations
+function getEditorBackgroundHex(): string {
+  // Try workspace color customizations.
   const customizations = vscode.workspace
     .getConfiguration('workbench')
     .get<Record<string, string>>('colorCustomizations');
@@ -46,22 +36,16 @@ function getEditorBackgroundHex(cfg: vscode.WorkspaceConfiguration): string {
     return customizations['editor.background'];
   }
 
-  // [2] Try the extension's own editorBackground setting
-  const userHex = cfg.get<string>('editorBackground', '');
-  if (userHex) {
-    return userHex;
-  }
-
-  // [3] Fall back to a sensible default based on theme kind
+  // Fall back to a sensible default based on theme kind.
   return defaultBackgroundForThemeKind();
 }
 
 /**
  * Resolve the editor background through the three-step fallback chain.
  */
-function resolveEditorBackground(cfg: vscode.WorkspaceConfiguration): RGBA {
-  const hex = getEditorBackgroundHex(cfg);
-  return parseHexColor(hex) ?? DEFAULT_DARK;
+function resolveEditorBackground(): RGBA {
+  const hex = getEditorBackgroundHex();
+  return hexStrategy.extract(hex)?.rgba ?? DEFAULT_DARK;
 }
 
 // -------------------------------------- PUBLIC API -------------------------------------
@@ -78,10 +62,11 @@ export function readConfig(): ExtensionConfig {
   const cfg = vscode.workspace.getConfiguration('colorTrace');
 
   return {
-    borderRadius: cfg.get<string>('borderRadius', '0.25em'),
-    editorBackground: resolveEditorBackground(cfg),
+    editorBackground: resolveEditorBackground(),
     enable: cfg.get<boolean>('enable', true),
     highlightNamedColors: cfg.get<boolean>('highlightNamedColors', true),
+    highlightTailwind: cfg.get<boolean>('highlightTailwind', true),
+    ignorePatterns: cfg.get<string[]>('ignorePatterns', []),
   };
 }
 

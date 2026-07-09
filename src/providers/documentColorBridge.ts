@@ -7,13 +7,12 @@
  */
 
 import * as vscode from 'vscode';
-import type { ColorMatch } from '@/core/colorParser';
-import type { RGBA } from '@/core/colorUtils';
+import type { ColorMatch } from '@/types';
 
 /**
  * Query all registered DocumentColorProviders for the given document.
  *
- * @returns  ColorMatch[] derived from other extensions' color providers.
+ * @returns  `ColorMatch[]` derived from other extensions' color providers.
  *           Returns an empty array if no providers are available.
  */
 export async function getProviderColors(document: vscode.TextDocument): Promise<ColorMatch[]> {
@@ -33,14 +32,14 @@ export async function getProviderColors(document: vscode.TextDocument): Promise<
       const originalText = document.getText(info.range);
 
       // VS Code's Color uses 0-1 for all channels.
-      const rgba: RGBA = {
+      const rgba = {
         a: info.color.alpha,
         b: Math.round(info.color.blue * 255),
         g: Math.round(info.color.green * 255),
         r: Math.round(info.color.red * 255),
       };
 
-      return { endOffset, originalText, rgba, startOffset };
+      return { color: { css: originalText, rgba }, endOffset, originalText, startOffset };
     });
   } catch {
     // Provider may not be available; Silently return empty.

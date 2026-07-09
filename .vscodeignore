@@ -1,13 +1,14 @@
 !dist/**
+
 .github/
 .vscode/
 node_modules/
 src/
+test/
 
 .gitignore
 .oxfmtrc.json
 .oxlintrc.json
-*.ts
 esbuild.js
 pnpm-lock.yaml
 pnpm-workspace.yaml

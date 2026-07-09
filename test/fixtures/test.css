@@ -1,0 +1,72 @@
+/* CSS test fixture for Color Trace */
+
+/****************************** Variable Definitions ******************************/
+
+:root {
+  --primary-color: #9670ff;
+  --secondary-color: hsl(281, 100%, 72%);
+  --bg-dark: rgb(30, 30, 30);
+  --bg-light: rgba(255, 255, 255, 0.9);
+
+  /* Tailwind v4 style variable definitions */
+  --color-brand-red: #ff5a5c;
+  --color-brand-blue: #7075ff;
+  --color-transparent-black: rgba(0, 0, 0, 0.5);
+}
+
+/********************************** Color Formats *********************************/
+
+.hex-test {
+  color: #f00;
+  caret-color: #f00a;
+  border-color: #0000ff;
+  background-color: #00ff00aa;
+}
+
+.rgb-hsl-test {
+  color: rgb(255, 142, 83);
+  outline-color: hsla(359, 100%, 68%, 1);
+  border-top-color: hsl(281 100% 72% / 0.8);
+  background: rgba(150, 112, 255, 0.5);
+  fill: hwb(140 25% 14%);
+}
+
+/********************************** Named Colors **********************************/
+
+.named-colors-test {
+  color: tomato;
+  border-color: cornflowerblue;
+  outline-color: darkgoldenrod;
+  background-color: transparent;
+}
+
+/********************************* Variable Usages ********************************/
+
+.var-usage-test {
+  color: var(--primary-color);
+  background-color: var(--bg-dark);
+  border: 1px solid var(--color-brand-blue);
+}
+
+/****************************** Hyphen Boundary Tests *****************************/
+/* Should NOT highlight the color in the class name. */
+
+.btn-red {
+  background: var(--color-brand-red);
+}
+
+.text-blue-500 {
+  color: #709bff;
+}
+
+.brand-green-light {
+  color: #40db80;
+}
+
+/********************************* Tailwind @apply ********************************/
+/* Should not highlight the color name from inside the class name. */
+
+.card-shadow {
+  @apply shadow-lg border-gray-200;
+  @apply text-blue-700 bg-white;
+}

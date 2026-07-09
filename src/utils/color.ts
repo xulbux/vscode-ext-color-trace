@@ -2,13 +2,7 @@
  * Pure color math utilities; No vscode dependency.
  */
 
-/** RGBA color with `r`/`g`/`b` in 0-255 and `a` in 0-1. */
-export interface RGBA {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
-}
+import type { RGBA } from '@/types';
 
 /**
  * Convert HSL to RGB.
@@ -120,18 +114,6 @@ export function alphaBlend(fg: RGBA, bg: RGBA): RGBA {
   };
 }
 
-/**
- * Choose black or white foreground text for the given background.
- * If the background is semi-transparent it is first blended over `editorBg`.
- * Uses the WCAG 2.1 luminance threshold of 0.179.
- */
-export function chooseFgColor(bgRgba: RGBA, editorBg: RGBA): '#000000' | '#FFFFFF' {
-  const solid = bgRgba.a < 1 ? alphaBlend(bgRgba, editorBg) : bgRgba;
-
-  const lum = relativeLuminance(solid.r, solid.g, solid.b);
-  return lum > 0.179 ? '#000000' : '#FFFFFF';
-}
-
 function toHex(n: number): string {
   return Math.round(Math.max(0, Math.min(255, n)))
     .toString(16)
@@ -158,5 +140,3 @@ export function rgbaToCssString(rgba: RGBA): string {
 
   return rgba.a >= 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${rgba.a})`;
 }
-
-

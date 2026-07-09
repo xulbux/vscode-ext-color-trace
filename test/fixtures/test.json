@@ -1,0 +1,10 @@
+{
+  "theme": "dark",
+  "colors": {
+    "background": "#0D0D17",
+    "foreground": "#C9C9D9",
+    "primary": "rgba(150, 112, 255, 1)",
+    "secondary": "hsl(240, 12%, 48%)",
+    "danger": "0xFF5A5C"
+  }
+}

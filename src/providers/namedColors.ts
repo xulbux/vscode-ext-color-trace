@@ -157,22 +157,25 @@ export const NAMED_COLORS = new Map<string, [number, number, number]>([
 ]);
 
 /**
- * VS Code language IDs in which CSS named-color keywords should be matched.
+ * VS Code language IDs in which CSS named-color keywords
+ * should be matched unconditionally (the entire file is CSS).
  */
-export const CSS_LANGUAGES = new Set<string>([
+export const PURE_CSS_LANGUAGES = new Set<string>(['css', 'less', 'sass', 'scss', 'stylus']);
+
+/**
+ * VS Code language IDs where CSS can appear embedded (inside `<style>` blocks or `style="…"` attributes).
+ * Named colors are matched here too, but only when the word is NOT adjacent to a hyphen
+ * (to avoid false positives like `text-red` or `bg-red-08` in Tailwind / utility class names).
+ */
+export const MIXED_CSS_LANGUAGES = new Set<string>([
   'astro',
-  'css',
   'ejs',
   'erb',
   'handlebars',
   'html',
   'jade',
-  'less',
   'php',
   'pug',
-  'sass',
-  'scss',
-  'stylus',
   'svelte',
   'svg',
   'vue',

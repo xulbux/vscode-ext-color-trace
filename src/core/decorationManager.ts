@@ -7,15 +7,10 @@
  */
 
 import * as vscode from 'vscode';
-import { type RGBA, chooseFgColor, rgbaToCssString, rgbaToHexString } from './colorUtils';
+import type { ColorData, DecorationEntry, RGBA } from '@/types';
+import { alphaBlend, relativeLuminance, rgbaToHexString } from '@/utils/color';
 
 // ---------------------------------------- TYPES ----------------------------------------
-
-interface DecorationEntry {
-  type: vscode.TextEditorDecorationType;
-  /** Ranges currently applied to each editor (keyed by editor id). */
-  activeEditors: Set<string>;
-}
 
 // ---------------------------------------- CACHE ----------------------------------------
 
@@ -31,18 +26,27 @@ const editorStyleKeys = new Map<string, Set<string>>();
 
 /**
  * Build a unique fingerprint for a decoration style.
- * Format: `bg:<css>|fg:<hex>|border:<css>|radius:<css>`
+ * Format: `bg:<css>|fg:<hex>|border:<css>|outline:<css>`
+ *
+ * @param color       The highlight color data containing native CSS string and RGBA fallback.
+ * @param editorBg    The editor background color (for contrast calculations).
+ * @param outlineCss  The statically calculated outline CSS.
  */
-function styleFingerprint(rgba: RGBA, fg: string, borderRadius: string): string {
-  const bgCss = rgbaToCssString(rgba);
+function styleFingerprint(color: ColorData, editorBg: RGBA, outlineCss: string): string {
+  // If the highlight is semi-transparent, blend it over the editor background first
+  const { rgba } = color;
+  const solid = rgba.a < 1 ? alphaBlend(rgba, editorBg) : rgba;
+  const lum = relativeLuminance(solid.r, solid.g, solid.b);
+  const fg = lum > 0.179 ? '#000000' : '#FFFFFF';
+
+  // Always use the native CSS string for the actual background decoration, unless we need to force opacity for the border.
+  const bgCss = color.css;
   const isTransparent = rgba.a < 1;
 
-  // For transparent colors, use the opaque version for the border.
-  const borderCss = isTransparent
-    ? `0.2em solid ${rgbaToHexString({ ...rgba, a: 1 })}`
-    : `0.2em solid ${bgCss}`;
+  // For transparent colors, use the opaque version for the border (so the border is solid).
+  const borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
 
-  return `bg:${bgCss}|fg:${fg}|border:${borderCss}|radius:${borderRadius}`;
+  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}`;
 }
 
 /**
@@ -55,22 +59,20 @@ function createEntry(fingerprint: string): DecorationEntry {
     parts.set(segment.slice(0, idx), segment.slice(idx + 1));
   }
 
-  const bg = parts.get('bg') ?? 'transparent';
-  const fg = parts.get('fg') ?? '#FFFFFF';
-  const border = parts.get('border') ?? 'none';
-  const radius = parts.get('radius') ?? '0.25em';
-
-  const options: vscode.DecorationRenderOptions = {
-    backgroundColor: bg,
-    borderRadius: radius,
-    color: fg,
+  const decoOptions: vscode.DecorationRenderOptions = {
+    backgroundColor: parts.get('bg') ?? 'transparent',
+    borderColor: parts.get('borderColor'),
+    borderRadius: '0.25em',
+    borderStyle: 'solid',
+    borderWidth: '0.2em 0.05em',
+    color: parts.get('fg') ?? '#FFFFFF',
+    outline: parts.get('outline'),
   };
 
-  if (border !== 'none') {
-    options.border = border;
-  }
-
-  return { activeEditors: new Set(), type: vscode.window.createTextEditorDecorationType(options) };
+  return {
+    activeEditors: new Set(),
+    type: vscode.window.createTextEditorDecorationType(decoOptions),
+  };
 }
 
 /**
@@ -104,24 +106,27 @@ function editorKey(editor: vscode.TextEditor): string {
  * Groups the supplied color matches by computed visual style, creates or reuses
  * cached TextEditorDecorationTypes, and applies them in one batch per unique style.
  *
- * @param editor        The editor to decorate.
- * @param matches       Color matches with resolved RGBA and document ranges.
- * @param editorBg      The editor background color (for contrast calculations).
- * @param borderRadius  CSS border-radius string.
+ * @param editor    The editor to decorate.
+ * @param matches   Color matches with resolved RGBA and document ranges.
+ * @param editorBg  The editor background color (for contrast calculations).
  */
 export function applyDecorations(
   editor: vscode.TextEditor,
-  matches: { range: vscode.Range; rgba: RGBA }[],
-  options: { editorBg: RGBA; borderRadius: string }
+  matches: { range: vscode.Range; color: ColorData }[],
+  options: { editorBg: RGBA }
 ): void {
   const editorId = editorKey(editor);
 
   // Group ranges by their visual style fingerprint.
   const groups = new Map<string, vscode.Range[]>();
 
-  for (const { range, rgba } of matches) {
-    const fg = chooseFgColor(rgba, options.editorBg);
-    const key = styleFingerprint(rgba, fg, options.borderRadius);
+  // Calculate static outline CSS once for the whole file scan based on editor bg.
+  const editorLum = relativeLuminance(options.editorBg.r, options.editorBg.g, options.editorBg.b);
+  const outlineCss =
+    editorLum > 0.179 ? '1px solid rgba(0, 0, 0, 0.10)' : '1px solid rgba(255, 255, 255, 0.12)';
+
+  for (const { range, color } of matches) {
+    const key = styleFingerprint(color, options.editorBg, outlineCss);
 
     let ranges = groups.get(key);
     if (!ranges) {

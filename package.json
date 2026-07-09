@@ -64,20 +64,23 @@
           "default": true,
           "description": "Enable color highlighting."
         },
-        "colorTrace.editorBackground": {
-          "type": "string",
-          "default": "",
-          "description": "Override the editor background color used for transparent color readability calculations. Leave empty to auto-detect. Accepts any hex color (e.g. `#1E1E1E`)."
-        },
         "colorTrace.highlightNamedColors": {
           "type": "boolean",
           "default": true,
           "description": "Highlight named CSS colors (e.g. `red`, `tomato`, …) in CSS-like languages."
         },
-        "colorTrace.borderRadius": {
-          "type": "string",
-          "default": "0.25em",
-          "description": "Border radius for color highlights."
+        "colorTrace.highlightTailwind": {
+          "type": "boolean",
+          "default": true,
+          "description": "Highlight Tailwind CSS color classes."
+        },
+        "colorTrace.ignorePatterns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "A list of glob file patterns in which to disable color highlighting."
         }
       }
     }
@@ -87,7 +90,7 @@
   ],
   "icon": "./assets/icon.png",
   "engines": {
-    "vscode": "^1.128.0"
+    "vscode": "^1.125.0"
   },
   "__metadata": {
     "id": "39cf6240-75d9-4602-97ff-1c0b1e355e94",
