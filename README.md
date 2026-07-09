@@ -34,7 +34,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
   <tbody>
     <tr>
       <td align="left"><strong>Standard Colors</strong></td>
-      <td align="left">HEX, RGB, RGBA, HSL, HSLA, HWB, LCH, OKLCH, OKLAB</td>
+      <td align="left">HEX, RGB, HSL, HWB, OKLCH, OKLAB</td>
     </tr>
     <tr>
       <td align="left"><strong>Named Colors</strong></td>
@@ -58,11 +58,13 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 
 ## Extension Previews ✨
 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**CSS & Variables**&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-> <a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png?raw=true" alt="CSS Variable Tracing" height="300" align="center"></a>
+### CSS
 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**Tailwind CSS**
-> <a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/tailwind.png?raw=true" alt="Tailwind CSS Marking" height="300" align="center"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
+
+### TypeScript
+
+<a href="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-trace/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
 
 <br>
 <br>

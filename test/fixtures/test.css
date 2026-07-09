@@ -76,7 +76,7 @@
 }
 
 /****************************** Hyphen Boundary Tests *****************************/
-/* Should NOT highlight the color in the class name. */
+/* Should NOT mark the color in the class name. */
 
 .btn-red {
   background: var(--color-brand-red, red);
@@ -91,7 +91,7 @@
 }
 
 /********************************* Tailwind @apply ********************************/
-/* Should not highlight the color name from inside the class name. */
+/* Should NOT mark the color name from inside the class name. */
 
 .card-shadow {
   @apply shadow-lg border-gray-200;
