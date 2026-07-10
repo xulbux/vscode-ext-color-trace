@@ -16,8 +16,8 @@ import { getVariable, setVariable } from './variableManager';
 const NAMED_COLORS_KEYS = [...NAMED_COLORS.keys()].join('|');
 const WORD_RE = new RegExp(`\\b(?:${NAMED_COLORS_KEYS})\\b`, 'gi');
 
-/** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. */
-const VAR_USE_RE = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+))/g;
+/** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. Excludes definitions (followed by `:`). */
+const VAR_USE_RE = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+)(?!\s*:))/g;
 
 /** Matches Tailwind CSS color utility classes. */
 const TAILWIND_PREFIXES =
