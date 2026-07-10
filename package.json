@@ -1,7 +1,7 @@
 {
   "name": "color-tracr",
   "displayName": "Color Tracr",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Fast, readable color marking in the editor.",
   "categories": [
     "Other",
