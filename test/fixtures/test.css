@@ -51,7 +51,7 @@
 }
 
 .rgb-hsl-test {
-  color: rgb(255, 142, 83);
+  color: rgb(255, 128, 96);
   outline-color: hsla(359, 100%, 68%, 1);
   border-top-color: hsl(281 100% 72% / 0.8);
   background: rgba(150, 112, 255, 0.5);

@@ -6,7 +6,7 @@ class Theme:
     SECONDARY = "#D270FF"
     BACKGROUND = "#1E1E1E"
     TEXT = "rgba(255, 255, 255, 0.8)"
-    ACCENT = "hsl(21, 100%, 66%)"
+    ACCENT = "hsl(12, 100%, 70%)"
     SUCCESS = "hwb(150 24% 15%)"
 
     BG_INT = 0x1E1E1E
