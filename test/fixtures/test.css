@@ -34,6 +34,14 @@
   /* HWB */
   --color-hwb: hwb(256 44% 0%);
 
+  /* HSV / HSVA */
+  --color-hsv: hsv(256, 100%, 72%);
+  --color-hsva: hsva(256 100% 72% / 0.5);
+
+  /* CMYK */
+  --color-cmyk: device-cmyk(0 81% 81% 30%);
+  --color-cmyk-alpha: device-cmyk(0 81% 81% 30% / 0.5);
+
   /* Wide Gamut */
   --color-oklch: oklch(60% 0.15 25);
   --color-lch: lch(60% 40 25);

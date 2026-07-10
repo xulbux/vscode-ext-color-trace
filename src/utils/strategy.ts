@@ -74,7 +74,11 @@ export function parseHue(token: string): number {
 }
 
 /** Extract tokens from inside parentheses and validate CSS punctuation rules. */
-export function extractTokens(str: string, allowCommas = true): string[] | undefined {
+export function extractTokens(
+  str: string,
+  allowCommas = true,
+  maxChannelsBeforeSlash = 3
+): string[] | undefined {
   const inner = str.slice(str.indexOf('(') + 1, str.lastIndexOf(')'));
 
   let commaCount = 0;
@@ -109,7 +113,7 @@ export function extractTokens(str: string, allowCommas = true): string[] | undef
     return undefined; // Invalid: missing or extra commas.
   }
 
-  if (commaCount === 0 && slashCount === 0 && tokens.length > 3) {
+  if (commaCount === 0 && slashCount === 0 && tokens.length > maxChannelsBeforeSlash) {
     return undefined; // Invalid: missing slash for alpha in space-separated syntax.
   }
 
@@ -124,14 +128,14 @@ export function extractTokens(str: string, allowCommas = true): string[] | undef
 export function parseColorTokens(
   matchText: string,
   validPrefixes: string[],
-  options: { allowCommas?: boolean; minTokens?: number } = {}
+  options: { allowCommas?: boolean; minTokens?: number; maxChannelsBeforeSlash?: number } = {}
 ): string[] | undefined {
-  const { allowCommas = true, minTokens = 3 } = options;
+  const { allowCommas = true, minTokens = 3, maxChannelsBeforeSlash = 3 } = options;
   const lower = matchText.trim().toLowerCase();
   if (!validPrefixes.some((prefix) => lower.startsWith(prefix))) {
     return undefined;
   }
-  const tokens = extractTokens(matchText, allowCommas);
+  const tokens = extractTokens(matchText, allowCommas, maxChannelsBeforeSlash);
   if (!tokens || tokens.length < minTokens) {
     return undefined;
   }

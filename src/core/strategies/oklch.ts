@@ -13,7 +13,8 @@ function parseL(token: string): number {
   if (token.endsWith('%')) {
     return Number.parseFloat(token) / 100;
   }
-  return Number.parseFloat(token); // for lab/oklab, could be 0-1 or 0-100, we normalize roughly to 0-1 for our fake rgb.
+  // For lab/oklab, could be 0-1 or 0-100, we normalize roughly to 0-1 for our fake rgb.
+  return Number.parseFloat(token);
 }
 
 /**

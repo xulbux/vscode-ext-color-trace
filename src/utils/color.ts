@@ -76,6 +76,68 @@ export function hwbToRgb(h: number, w: number, b: number): [number, number, numb
 }
 
 /**
+ * Convert HSV to RGB.
+ * @param h   Hue        (0-360)
+ * @param s   Saturation (0-1)
+ * @param v   Value      (0-1)
+ * @returns `[r, g, b]` each 0-255
+ */
+export function hsvToRgb(h: number, s: number, v: number): [number, number, number] {
+  const hue = ((h % 360) + 360) % 360;
+  const c = v * s;
+  const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
+  const m = v - c;
+
+  let r = 0;
+  let g = 0;
+  let b = 0;
+
+  if (hue < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (hue < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (hue < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (hue < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (hue < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
+}
+
+/**
+ * Convert CMYK to RGB.
+ * @param cmyk  Tuple of [c, m, y, k] each 0-1
+ * @returns `[r, g, b]` each 0-255
+ */
+export function cmykToRgb([c, m, y, k]: [number, number, number, number]): [
+  number,
+  number,
+  number,
+] {
+  const r = 255 * (1 - c) * (1 - k);
+  const g = 255 * (1 - m) * (1 - k);
+  const b = 255 * (1 - y) * (1 - k);
+  return [Math.round(r), Math.round(g), Math.round(b)];
+}
+
+/**
  * Linearize a single sRGB channel value (0-255) for luminance calculation.
  */
 function linearize(channel: number): number {
