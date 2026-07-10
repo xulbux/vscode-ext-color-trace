@@ -27,6 +27,10 @@ export interface ExtensionConfig {
   matchRgbWithNoFunction: string[];
   /** Array of language IDs to match raw HSL numbers. */
   matchHslWithNoFunction: string[];
+  /** Array of language IDs to match raw LCH numbers. */
+  matchLchWithNoFunction: string[];
+  /** Array of language IDs to match raw OKLCH numbers. */
+  matchOklchWithNoFunction: string[];
   /** Array of language IDs to interpret 8-digit hexes as ARGB instead of RGBA. */
   useARGB: string[];
 }
@@ -59,6 +63,10 @@ export interface DocumentResolvedConfig {
   matchRgbWithNoFunction: boolean;
   /** True if raw HSL numbers should be matched. */
   matchHslWithNoFunction: boolean;
+  /** True if raw LCH numbers should be matched. */
+  matchLchWithNoFunction: boolean;
+  /** True if raw OKLCH numbers should be matched. */
+  matchOklchWithNoFunction: boolean;
   /** True if 8-digit hexes should be parsed as ARGB instead of RGBA. */
   useARGB: boolean;
   /** If true, the parser only extracts regex-based colors to find variable definitions, skipping secondary passes like tailwind and variables usages. */

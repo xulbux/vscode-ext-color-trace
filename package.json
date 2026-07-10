@@ -147,6 +147,22 @@
           "default": [],
           "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
         },
+        "colorTracr.matchLchWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw LCH numbers (e.g. `60% 40 25`) even when not wrapped in `lch()`. Language IDs to mark. Use `*` to enable for all."
+        },
+        "colorTracr.matchOklchWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw OKLCH numbers (e.g. `60% 0.15 25`) even when not wrapped in `oklch()`. Language IDs to mark. Use `*` to enable for all."
+        },
         "colorTracr.useARGB": {
           "type": "array",
           "items": {

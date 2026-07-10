@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import type { ColorData, DecorationEntry, DocumentResolvedConfig } from '@/types';
-import { alphaBlend, relativeLuminance, rgbaToHexString } from '@/utils/color';
+import { alphaBlend, relativeLuminance } from '@/utils/color';
 
 // ---------------------------------------- CACHE ----------------------------------------
 
@@ -50,7 +50,7 @@ function styleFingerprint(
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
   // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
-  let borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
+  let borderColor = isTransparent ? color.opaqueCss : bgCss;
   if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
     borderColor = 'transparent';
   }

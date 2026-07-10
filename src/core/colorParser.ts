@@ -33,7 +33,7 @@ import { mergeNonOverlapping } from '@/utils/ranges';
 
 const regexCache = new Map<string, RegExp>();
 function getRegex(options: DocumentResolvedConfig): RegExp {
-  const key = `${options.matchRgbWithNoFunction}-${options.matchHslWithNoFunction}-${options.useARGB}`;
+  const key = `${options.matchRgbWithNoFunction}-${options.matchHslWithNoFunction}-${options.matchOklchWithNoFunction}-${options.matchLchWithNoFunction}-${options.useARGB}`;
   let colorRe = regexCache.get(key);
   if (!colorRe) {
     const patterns: string[] = [];

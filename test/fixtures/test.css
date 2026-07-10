@@ -44,9 +44,19 @@
 
   /* Wide Gamut */
   --color-oklch: oklch(60% 0.15 25);
+  --color-oklch-tp: oklch(60% 0.15 25 / 0.5);
   --color-lch: lch(60% 40 25);
+  --color-lch-tp: lch(60% 40 25 / 0.5);
   --color-oklab: oklab(0.6 0.1 0.1);
+  --color-oklab-tp: oklab(0.6 0.1 0.1 / 0.5);
   --color-lab: lab(60 20 20);
+  --color-lab-tp: lab(60 20 20 / 0.5);
+
+  /* Raw Formats */
+  --raw-oklch: 60% 0.15 25;
+  --raw-oklch-tp: 60% 0.15 25 / 0.5;
+  --raw-lch: 60% 40 25 / 0.5;
+  --raw-lch-tp: 60% 40 25 / 0.5;
 }
 
 /********************************** Color Formats *********************************/

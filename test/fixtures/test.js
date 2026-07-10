@@ -18,6 +18,8 @@ const styledComponentStyles = {
     color: '#fff',
   },
   container: {
+    '--raw-oklch-token': '60% 0.15 25',
+    '--tw-bg-opacity': '1',
     backgroundColor: '#ffffff',
     borderBottom: '2px solid #e0e0e0',
     color: 'rgba(0, 0, 0, 0.87)',
