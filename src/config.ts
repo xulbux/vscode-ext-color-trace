@@ -74,6 +74,12 @@ export function readConfig(): ExtensionConfig {
   cachedConfig = {
     editorBackground: resolveEditorBackground(),
     enable: cfg.get<string[]>('enable', ['*']),
+    excludePaths: cfg.get<string[]>('excludePaths', [
+      '**/node_modules/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/.next/**',
+    ]),
     markNamedColors: cfg.get<boolean>('markNamedColors', true),
     markTailwind: cfg.get<string[]>('markTailwind', ['*']),
     markerType: cfg.get<'highlight' | 'dot-before' | 'dot-after'>('markerType', 'highlight'),

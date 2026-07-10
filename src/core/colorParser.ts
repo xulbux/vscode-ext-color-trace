@@ -16,14 +16,14 @@ import { getVariable, setVariable } from './variableManager';
 const NAMED_COLORS_KEYS = [...NAMED_COLORS.keys()].join('|');
 const WORD_RE = new RegExp(`\\b(?:${NAMED_COLORS_KEYS})\\b`, 'gi');
 
-/** Matches `var(--name)` and `var(--name, fallback)` but we only capture up to the name. */
-const VAR_USE_RE = /var\(\s*(?<name>--[a-zA-Z0-9-_]+)/g;
+/** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. */
+const VAR_USE_RE = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+))/g;
 
 /** Matches Tailwind CSS color utility classes. */
 const TAILWIND_PREFIXES =
   'bg|text|border|ring|fill|stroke|shadow|outline|decoration|accent|caret|divide|placeholder|from|via|to';
 const CLASS_RE = new RegExp(
-  `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+)(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
+  `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+|\\[[^\\]]+\\])(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
   'g'
 );
 
@@ -100,12 +100,12 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 // -------------------------------------- EXTRACTORS -------------------------------------
 
 function extractVariableUsages(text: string): ColorMatch[] {
-  if (!text.includes('var(')) {
+  if (!text.includes('var(') && !text.includes('$') && !text.includes('@')) {
     return [];
   }
   const results: ColorMatch[] = [];
   for (const varMatch of text.matchAll(VAR_USE_RE)) {
-    const varName = varMatch.groups?.name;
+    const varName = varMatch.groups?.name1 || varMatch.groups?.name2;
     if (varName) {
       const colorData = getVariable(varName);
       if (colorData) {
@@ -144,7 +144,19 @@ function extractTailwindClasses(text: string): ColorMatch[] {
       const alpha = classMatch.groups?.alpha;
 
       if (prefix && colorName) {
-        let colorData = getVariable(`--color-${colorName}`);
+        let colorData: ColorData | undefined = undefined;
+
+        if (colorName.startsWith('[') && colorName.endsWith(']')) {
+          const innerColor = colorName.slice(1, -1);
+          for (const strategy of strategies) {
+            colorData = strategy.extract(innerColor);
+            if (colorData) {
+              break;
+            }
+          }
+        } else {
+          colorData = getVariable(`--color-${colorName}`);
+        }
 
         if (colorData) {
           if (alpha) {
@@ -249,9 +261,10 @@ export function extractColors(
     }
 
     if (colorData) {
-      // Check if this color is a variable definition: `--var-name: <color>`
+      // Check if this color is a variable definition:
+      // `--var-name: <color>` or `$var-name: <color>` or `@var-name: <color>`
       const prefix = text.slice(Math.max(0, match.index - 100), match.index);
-      const defMatch = prefix.match(/(?<name>--[a-zA-Z0-9-_]+)\s*:\s*$/);
+      const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
       if (defMatch?.groups) {
         setVariable(defMatch.groups.name, colorData, options.uri ?? '');
       }

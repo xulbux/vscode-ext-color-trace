@@ -2,14 +2,21 @@ import type { RGBA } from './color';
 
 /** Resolved extension configuration. */
 export interface ExtensionConfig {
+  // Core
   /** Array of language IDs where the extension is active. */
   enable: string[];
+  /** Array of glob patterns to exclude from workspace scanning. */
+  excludePaths: string[];
+
+  // Visual
   /** The editor's background color. */
   editorBackground: RGBA;
   /** The decoration style to apply to matching colors. */
   markerType: 'highlight' | 'dot-before' | 'dot-after';
   /** Whether to respect the alpha channel in color previews. */
   showAlpha: boolean;
+
+  // Matching
   /** Whether to enable named color marking. */
   markNamedColors: boolean;
   /** Array of language IDs to enable Tailwind CSS class marking. */
@@ -27,15 +34,19 @@ export interface ExtensionConfig {
  * Features that take language arrays in settings are evaluated to booleans.
  */
 export interface DocumentResolvedConfig {
-  /** The editor's background color. */
-  editorBackground: RGBA;
+  // Core
   /** True if the extension is enabled for this document's language. */
   enable: boolean;
+
+  // Visual
+  /** The editor's background color. */
+  editorBackground: RGBA;
   /** The decoration style to apply to matching colors. */
   markerType: 'highlight' | 'dot-before' | 'dot-after';
   /** Whether to respect the alpha channel in color previews. */
   showAlpha: boolean;
 
+  // Matching
   /** True if named colors should be marked. */
   markNamedColors: boolean;
   /** True if Tailwind CSS classes should be marked. */

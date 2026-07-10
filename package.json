@@ -78,6 +78,19 @@
           ],
           "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
         },
+        "colorTracr.excludePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.next/**"
+          ],
+          "description": "Folders and files to ignore during workspace scanning. Uses glob patterns."
+        },
         "colorTracr.markerType": {
           "type": "string",
           "default": "highlight",

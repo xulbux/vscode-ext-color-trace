@@ -45,9 +45,12 @@ export function activate(context: vscode.ExtensionContext): void {
     // [1] Instantly scan visible editors (they might only have local colors).
     scanAllVisible(config);
 
+    const excludePattern =
+      config.excludePaths.length > 0 ? `{${config.excludePaths.join(',')}}` : undefined;
+
     // [2] Scan workspace for CSS variables in the background, then re-scan visible editors.
     vscode.workspace
-      .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', '**/node_modules/**', 100)
+      .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', excludePattern, 500)
       .then(async (uris) => {
         for (let i = 0; i < uris.length; i += 5) {
           const chunk = uris.slice(i, i + 5);
