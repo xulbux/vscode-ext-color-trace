@@ -3,6 +3,9 @@ import { ALPHA, NUM, clampAlpha, clampChannel, parseAlpha, parsePercent } from '
 
 export const colorFnStrategy: ColorParsingStrategy = {
   extract(matchText: string): ColorData | undefined {
+    if (!matchText.trim().toLowerCase().startsWith('color(')) {
+      return undefined;
+    }
     const inner = matchText.slice(matchText.indexOf('(') + 1, matchText.lastIndexOf(')')).trim();
     const parts = inner.split(/[\s/]+/).filter(Boolean);
     if (parts.length < 4) {
