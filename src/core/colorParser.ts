@@ -205,7 +205,9 @@ export function extractColors(
 
   // Pre-calculate comment ranges to avoid registering commented-out variable definitions.
   const commentRanges: { start: number; end: number }[] = [];
-  for (const match of text.matchAll(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm)) {
+  for (const match of text.matchAll(
+    /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm
+  )) {
     commentRanges.push({ end: match.index + match[0].length, start: match.index });
   }
   commentRanges.sort((a, b) => a.start - b.start);

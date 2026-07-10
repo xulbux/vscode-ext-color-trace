@@ -64,8 +64,14 @@ export function activate(context: vscode.ExtensionContext): void {
             chunk.map(async (uri) => {
               try {
                 const bytes = await vscode.workspace.fs.readFile(uri);
+                if (bytes.length > 500_000) {
+                  // Skip massive minified files to prevent high memory usage and extension host freezing.
+                  return;
+                }
+
                 const text = new TextDecoder().decode(bytes);
                 const uriStr = uri.toString();
+
                 clearVariablesForUri(uriStr);
                 extractColors(text, 'css', {
                   ...resolveDocumentConfig(config, 'css'),
@@ -233,7 +239,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (config.enable) {
           scanAllVisible(config);
         } else {
-          // Extension disabled; Remove all decorations
+          // Extension disabled; Remove all decorations.
           for (const editor of vscode.window.visibleTextEditors) {
             clearDecorations(editor);
           }
