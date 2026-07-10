@@ -11,7 +11,7 @@ import { getProviderColors } from '@/providers/documentColorBridge';
 import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
 import { extractColors, hasOverlap } from './colorParser';
 import { applyDecorations } from './decorationManager';
-import { clearVariablesForUri } from './variableManager';
+import { areVariablesEqual, clearVariablesForUri, getVariablesForUri } from './variableManager';
 
 // ---------------------------------------- CACHE ----------------------------------------
 
@@ -105,6 +105,20 @@ function hasDiagnosticOverlap(range: vscode.Range, diagnostics: vscode.Diagnosti
 // -------------------------------------- PUBLIC API -------------------------------------
 
 /**
+ * Invalidate the cache for a specific document.
+ */
+export function invalidateCache(uri: string): void {
+  cache.delete(uri);
+}
+
+/**
+ * Clear the entire scan cache.
+ */
+export function clearCache(): void {
+  cache.clear();
+}
+
+/**
  * Scan the visible portions of an editor for colors and apply decorations.
  *
  * @param editor   The text editor to scan.
@@ -144,9 +158,22 @@ export async function scanEditor(
   const scanRange = new vscode.Range(0, 0, lastLine, doc.lineAt(lastLine).text.length);
 
   // [2] Regex-based extraction.
+  const beforeVars = getVariablesForUri(uri);
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
+  const afterVars = getVariablesForUri(uri);
   const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+
+  if (!areVariablesEqual(beforeVars, afterVars)) {
+    for (const visibleEditor of vscode.window.visibleTextEditors) {
+      if (visibleEditor.document.uri.toString() !== uri) {
+        invalidateCache(visibleEditor.document.uri.toString());
+        scanEditor(visibleEditor, config).catch(() => {
+          // Ignore
+        });
+      }
+    }
+  }
 
   // [2.5] Immediately apply fast regex matches for zero-latency feedback.
   const fastResults: { range: vscode.Range; color: ColorData }[] = [];
@@ -192,18 +219,4 @@ export async function scanEditor(
     .catch(() => {
       // Ignore provider errors.
     });
-}
-
-/**
- * Invalidate the cache for a specific document.
- */
-export function invalidateCache(uri: string): void {
-  cache.delete(uri);
-}
-
-/**
- * Clear the entire scan cache.
- */
-export function clearCache(): void {
-  cache.clear();
 }

@@ -61,4 +61,6 @@ export interface DocumentResolvedConfig {
   matchHslWithNoFunction: boolean;
   /** True if 8-digit hexes should be parsed as ARGB instead of RGBA. */
   useARGB: boolean;
+  /** If true, the parser only extracts regex-based colors to find variable definitions, skipping secondary passes like tailwind and variables usages. */
+  extractOnly?: boolean;
 }

@@ -64,6 +64,7 @@ export function activate(context: vscode.ExtensionContext): void {
                 clearVariablesForUri(uriStr);
                 extractColors(text, 'css', {
                   ...resolveDocumentConfig(config, 'css'),
+                  extractOnly: true,
                   uri: uriStr,
                 });
               } catch {
@@ -138,6 +139,20 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
       invalidateCache(doc.uri.toString());
+    })
+  );
+
+  // --- Files deleted/renamed; Clean up variables ---
+  context.subscriptions.push(
+    vscode.workspace.onDidDeleteFiles((event) => {
+      for (const file of event.files) {
+        clearVariablesForUri(file.toString());
+      }
+    }),
+    vscode.workspace.onDidRenameFiles((event) => {
+      for (const file of event.files) {
+        clearVariablesForUri(file.oldUri.toString());
+      }
     })
   );
 

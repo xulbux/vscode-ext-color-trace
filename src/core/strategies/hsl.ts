@@ -34,8 +34,9 @@ export const hslStrategy: ColorParsingStrategy = {
         return undefined;
       }
       h = parseHue(tokens[0]);
-      s = parsePercent(tokens[1]);
-      l = parsePercent(tokens[2]);
+      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
+      s = sVal;
+      l = lVal;
       a = clampAlpha(parseAlpha(tokens[3]));
     } else {
       const tokens = parseColorTokens(matchText, ['hsl']);
@@ -44,8 +45,9 @@ export const hslStrategy: ColorParsingStrategy = {
       }
 
       h = parseHue(tokens[0]);
-      s = parsePercent(tokens[1]);
-      l = parsePercent(tokens[2]);
+      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
+      s = sVal;
+      l = lVal;
       a = clampAlpha(parseAlpha(tokens[3]));
     }
 

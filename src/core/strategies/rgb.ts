@@ -40,9 +40,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       if (tokens.slice(0, 3).some((t) => t.includes('%'))) {
         return undefined;
       }
-      r = clampChannel(parseChannel(tokens[0]));
-      g = clampChannel(parseChannel(tokens[1]));
-      b = clampChannel(parseChannel(tokens[2]));
+      const [rVal, gVal, bVal] = tokens.slice(0, 3).map((t) => parseChannel(t));
+      r = clampChannel(rVal);
+      g = clampChannel(gVal);
+      b = clampChannel(bVal);
       a = clampAlpha(parseAlpha(tokens[3]));
 
       if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
@@ -86,9 +87,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       a = clampAlpha(
         tokens[0].includes('%') || alphaVal <= 1 ? parseAlpha(tokens[0]) : alphaVal / 255
       );
-      r = clampChannel(parseChannel(tokens[1]));
-      g = clampChannel(parseChannel(tokens[2]));
-      b = clampChannel(parseChannel(tokens[3]));
+      const [rVal, gVal, bVal] = tokens.slice(1, 4).map((t) => parseChannel(t));
+      r = clampChannel(rVal);
+      g = clampChannel(gVal);
+      b = clampChannel(bVal);
 
       if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
         return undefined;
@@ -98,9 +100,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       return { css: `rgba(${r}, ${g}, ${b}, ${a})`, opaqueCss, rgba: { a, b, g, r } };
     }
 
-    r = clampChannel(parseChannel(tokens[0]));
-    g = clampChannel(parseChannel(tokens[1]));
-    b = clampChannel(parseChannel(tokens[2]));
+    const [rVal, gVal, bVal] = tokens.slice(0, 3).map((t) => parseChannel(t));
+    r = clampChannel(rVal);
+    g = clampChannel(gVal);
+    b = clampChannel(bVal);
     a = clampAlpha(parseAlpha(tokens[3]));
 
     if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {

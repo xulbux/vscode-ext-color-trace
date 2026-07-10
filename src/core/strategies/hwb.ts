@@ -20,8 +20,7 @@ export const hwbStrategy: ColorParsingStrategy = {
     }
 
     const h = parseHue(tokens[0]);
-    const w = parsePercent(tokens[1]);
-    const bk = parsePercent(tokens[2]);
+    const [w, bk] = tokens.slice(1, 3).map((t) => parsePercent(t));
     const a = clampAlpha(parseAlpha(tokens[3]));
 
     const [r, g, b] = hwbToRgb(h, w, bk);

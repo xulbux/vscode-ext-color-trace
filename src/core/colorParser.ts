@@ -136,6 +136,10 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
 }
 
 function extractTailwindClasses(text: string): ColorMatch[] {
+  if (!text.includes('-')) {
+    return [];
+  }
+
   const results: ColorMatch[] = [];
   for (const classMatch of text.matchAll(CLASS_RE)) {
     if (isValidTailwindBoundary(text, classMatch.index)) {
@@ -243,9 +247,39 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
 export function extractColors(
   text: string,
   languageId: string,
-  options: DocumentResolvedConfig & { uri?: string }
+  options: DocumentResolvedConfig & { uri?: string; extractOnly?: boolean }
 ): ColorMatch[] {
   let results: ColorMatch[] = [];
+
+  // Pre-calculate comment ranges to avoid registering commented-out variable definitions.
+  const commentRanges: { start: number; end: number }[] = [];
+  for (const match of text.matchAll(/\/\*[\s\S]*?\*\//g)) {
+    commentRanges.push({ end: match.index + match[0].length, start: match.index });
+  }
+  for (const match of text.matchAll(/<!--[\s\S]*?-->/g)) {
+    commentRanges.push({ end: match.index + match[0].length, start: match.index });
+  }
+  for (const match of text.matchAll(/(?<!:)\/\/.*$/gm)) {
+    commentRanges.push({ end: match.index + match[0].length, start: match.index });
+  }
+  commentRanges.sort((a, b) => a.start - b.start);
+
+  function isInsideComment(index: number): boolean {
+    let left = 0;
+    let right = commentRanges.length - 1;
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2);
+      const range = commentRanges[mid];
+      if (index < range.start) {
+        right = mid - 1;
+      } else if (index >= range.end) {
+        left = mid + 1;
+      } else {
+        return true;
+      }
+    }
+    return false;
+  }
 
   const colorRe = getRegex(options);
 
@@ -265,7 +299,7 @@ export function extractColors(
       // `--var-name: <color>` or `$var-name: <color>` or `@var-name: <color>`
       const prefix = text.slice(Math.max(0, match.index - 100), match.index);
       const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-      if (defMatch?.groups) {
+      if (defMatch?.groups && !isInsideComment(match.index)) {
         setVariable(defMatch.groups.name, colorData, options.uri ?? '');
       }
 
@@ -278,6 +312,10 @@ export function extractColors(
     }
   }
   results = pass1;
+
+  if (options.extractOnly) {
+    return results;
+  }
 
   // [2] CSS Variable Usages.
   if (options.markVariables) {

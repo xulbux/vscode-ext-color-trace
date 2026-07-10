@@ -65,8 +65,15 @@ export function parseHue(token: string): number {
 export function extractTokens(str: string, allowCommas = true): string[] | undefined {
   const inner = str.slice(str.indexOf('(') + 1, str.lastIndexOf(')'));
 
-  const commaCount = (inner.match(/,/g) || []).length;
-  const slashCount = (inner.match(/\//g) || []).length;
+  let commaCount = 0;
+  let slashCount = 0;
+  for (const char of inner) {
+    if (char === ',') {
+      commaCount += 1;
+    } else if (char === '/') {
+      slashCount += 1;
+    }
+  }
 
   if (!allowCommas && commaCount > 0) {
     return undefined; // Invalid: commas are not allowed for this color format.
@@ -108,7 +115,7 @@ export function parseColorTokens(
   options: { allowCommas?: boolean; minTokens?: number } = {}
 ): string[] | undefined {
   const { allowCommas = true, minTokens = 3 } = options;
-  const lower = matchText.toLowerCase();
+  const lower = matchText.trim().toLowerCase();
   if (!validPrefixes.some((prefix) => lower.startsWith(prefix))) {
     return undefined;
   }

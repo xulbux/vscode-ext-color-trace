@@ -13,9 +13,7 @@ export const colorFnStrategy: ColorParsingStrategy = {
     }
 
     // parts[0] is the color space (e.g. display-p3)
-    const c1 = parsePercent(parts[1]);
-    const c2 = parsePercent(parts[2]);
-    const c3 = parsePercent(parts[3]);
+    const [c1, c2, c3] = parts.slice(1, 4).map((t) => parsePercent(t));
     const a = parts[4] ? clampAlpha(parseAlpha(parts[4])) : 1;
 
     // Approximate mapping back to 0-255 sRGB for the foreground contrasting logic.
