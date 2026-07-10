@@ -147,6 +147,11 @@ export function formatHexCss(
     const rrggbb = digits.slice(2, 8);
     cssStr = `#${rrggbb}${aa}`;
     opaqueCss = `#${rrggbb}`;
+  } else if (useARGB && digits.length === 4) {
+    const a = digits.slice(0, 1);
+    const rgb = digits.slice(1, 4);
+    cssStr = `#${rgb}${a}`;
+    opaqueCss = `#${rgb}`;
   } else {
     let len = digits.length;
     if (len === 4) {

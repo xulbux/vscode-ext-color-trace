@@ -11,12 +11,17 @@ import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/conf
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, disposeAll } from '@/core/decorationManager';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
-import { clearVariablesForUri } from '@/core/variableManager';
+import {
+  areVariablesEqual,
+  clearVariablesForUri,
+  getVariablesForUri,
+} from '@/core/variableManager';
 import type { ExtensionConfig } from '@/types';
 
 // ---------------------------------------- STATE ----------------------------------------
 
 let updateTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+const changedDocuments = new Set<vscode.TextDocument>();
 
 /** How long to wait after the last keystroke before re-scanning (ms). */
 const EDIT_DEBOUNCE = 150;
@@ -98,15 +103,42 @@ export function activate(context: vscode.ExtensionContext): void {
 
       // Invalidate cache for the changed document.
       invalidateCache(event.document.uri.toString());
+      changedDocuments.add(event.document);
 
       // Debounce: wait for the user to stop typing.
       if (updateTimer !== undefined) {
         clearTimeout(updateTimer);
       }
       updateTimer = setTimeout(() => {
-        for (const editor of vscode.window.visibleTextEditors) {
-          if (editor.document === event.document) {
-            triggerScan(editor, config);
+        const docs = [...changedDocuments];
+        changedDocuments.clear();
+
+        for (const doc of docs) {
+          let isVisible = false;
+          for (const editor of vscode.window.visibleTextEditors) {
+            if (editor.document === doc) {
+              isVisible = true;
+              triggerScan(editor, config);
+            }
+          }
+
+          if (!isVisible) {
+            const uriStr = doc.uri.toString();
+            const beforeVars = getVariablesForUri(uriStr);
+            clearVariablesForUri(uriStr);
+            extractColors(doc.getText(), doc.languageId, {
+              ...resolveDocumentConfig(config, doc.languageId),
+              extractOnly: true,
+              uri: uriStr,
+            });
+            const afterVars = getVariablesForUri(uriStr);
+
+            if (!areVariablesEqual(beforeVars, afterVars)) {
+              for (const visibleEditor of vscode.window.visibleTextEditors) {
+                invalidateCache(visibleEditor.document.uri.toString());
+                triggerScan(visibleEditor, config);
+              }
+            }
           }
         }
       }, EDIT_DEBOUNCE);

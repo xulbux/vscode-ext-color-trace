@@ -19,11 +19,18 @@ export function parseHex(
   switch (digits.length) {
     case 3:
     case 4: {
-      r = Number.parseInt(digits[0] + digits[0], 16);
-      g = Number.parseInt(digits[1] + digits[1], 16);
-      b = Number.parseInt(digits[2] + digits[2], 16);
-      if (digits.length === 4) {
-        a = Number.parseInt(digits[3] + digits[3], 16) / 255;
+      if (useARGB && digits.length === 4) {
+        a = Number.parseInt(digits[0] + digits[0], 16) / 255;
+        r = Number.parseInt(digits[1] + digits[1], 16);
+        g = Number.parseInt(digits[2] + digits[2], 16);
+        b = Number.parseInt(digits[3] + digits[3], 16);
+      } else {
+        r = Number.parseInt(digits[0] + digits[0], 16);
+        g = Number.parseInt(digits[1] + digits[1], 16);
+        b = Number.parseInt(digits[2] + digits[2], 16);
+        if (digits.length === 4) {
+          a = Number.parseInt(digits[3] + digits[3], 16) / 255;
+        }
       }
       break;
     }

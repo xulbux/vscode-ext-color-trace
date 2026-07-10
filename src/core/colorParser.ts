@@ -7,7 +7,7 @@
 
 import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/providers/namedColors';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
-import { strategies } from './strategies';
+import { extractWithStrategies, strategies } from './strategies';
 import { getVariable, setVariable } from './variableManager';
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
@@ -38,13 +38,11 @@ function getRegex(options: DocumentResolvedConfig): RegExp {
   if (!colorRe) {
     const patterns: string[] = [];
     for (const strategy of strategies) {
-      if (strategy.getPatterns) {
-        patterns.push(...strategy.getPatterns(options));
-      } else {
-        patterns.push(strategy.pattern);
-      }
+      const pats = strategy.getPatterns ? strategy.getPatterns(options) : [strategy.pattern];
+      const groupId = strategy.id.replace(/-/g, '_');
+      patterns.push(`(?<${groupId}>${pats.join('|')})`);
     }
-    colorRe = new RegExp(`(${patterns.join('|')})`, 'gi');
+    colorRe = new RegExp(patterns.join('|'), 'gi');
     regexCache.set(key, colorRe);
   }
   colorRe.lastIndex = 0;
@@ -94,7 +92,7 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
   return !/[a-zA-Z0-9_\-.#]/.test(prevChar);
 }
 
-function extractTailwindClasses(text: string): ColorMatch[] {
+function extractTailwindClasses(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
   if (!text.includes('-')) {
     return [];
   }
@@ -111,12 +109,7 @@ function extractTailwindClasses(text: string): ColorMatch[] {
 
         if (colorName.startsWith('[') && colorName.endsWith(']')) {
           const innerColor = colorName.slice(1, -1);
-          for (const strategy of strategies) {
-            colorData = strategy.extract(innerColor);
-            if (colorData) {
-              break;
-            }
-          }
+          colorData = extractWithStrategies(innerColor, options);
         } else {
           colorData = getVariable(`--color-${colorName}`);
         }
@@ -240,11 +233,17 @@ export function extractColors(
   const pass1: ColorMatch[] = [];
   for (const match of text.matchAll(colorRe)) {
     let colorData: ColorData | undefined = undefined;
-    for (const strategy of strategies) {
-      colorData = strategy.extract(match[0], options);
-      if (colorData) {
-        break;
+    const { groups } = match;
+    if (groups) {
+      for (const strategy of strategies) {
+        const groupId = strategy.id.replace(/-/g, '_');
+        if (groups[groupId] !== undefined) {
+          colorData = strategy.extract(match[0], options);
+          break;
+        }
       }
+    } else {
+      colorData = extractWithStrategies(match[0], options);
     }
 
     if (colorData) {
@@ -277,7 +276,7 @@ export function extractColors(
 
   // [3] Tailwind Classes.
   if (options.markTailwind) {
-    results = mergeNonOverlapping(results, extractTailwindClasses(text));
+    results = mergeNonOverlapping(results, extractTailwindClasses(text, options));
   }
 
   // [4] Named CSS colors.

@@ -34,7 +34,7 @@
   /* HWB */
   --color-hwb: hwb(256 44% 0%);
 
-  /* OKLCH (Wide Gamut) */
+  /* Wide Gamut */
   --color-oklch: oklch(60% 0.15 25);
   --color-lch: lch(60% 40 25);
   --color-oklab: oklab(0.6 0.1 0.1);
