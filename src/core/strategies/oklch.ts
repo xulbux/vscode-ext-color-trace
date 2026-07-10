@@ -57,5 +57,5 @@ export const oklchStrategy: ColorParsingStrategy = {
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },
   id: 'oklch',
-  pattern: String.raw`(?:oklch|lch|oklab|lab)\(\s*${NUM}\s+${NUM}\s+${HUE}(?:\s*/\s*${ALPHA})?\s*\)`,
+  pattern: String.raw`(?:(?:oklch|lch)\(\s*${NUM}\s+${NUM}\s+${HUE}(?:\s*/\s*${ALPHA})?\s*\)|(?:oklab|lab)\(\s*${NUM}\s+${NUM}\s+${NUM}(?:\s*/\s*${ALPHA})?\s*\))`,
 };

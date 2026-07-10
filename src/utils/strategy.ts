@@ -1,14 +1,14 @@
 /** Numeric value: integer or decimal, optionally a percentage. */
-export const NUM = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
+export const NUM = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?|none)`;
 
 /** Numeric value without percentage. */
-export const NUM_NO_PERCENT = String.raw`(?:\d+(?:\.\d+)?|\.\d+)`;
+export const NUM_NO_PERCENT = String.raw`(?:\d+(?:\.\d+)?|\.\d+|none)`;
 
 /** Percentage value: must end with `%`. */
-export const PERCENT = String.raw`(?:\d+(?:\.\d+)?%|\.\d+%)`;
+export const PERCENT = String.raw`(?:\d+(?:\.\d+)?%|\.\d+%|none)`;
 
 /** Alpha value: number or percentage. */
-export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?)`;
+export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?|none)`;
 
 /** Negative lookbehind to ensure we don't start inside a number/word. */
 export const BOUNDARY_START = String.raw`(?<![a-zA-Z0-9_.%-])`;
@@ -17,10 +17,13 @@ export const BOUNDARY_START = String.raw`(?<![a-zA-Z0-9_.%-])`;
 export const BOUNDARY_END = String.raw`(?![a-zA-Z0-9_.%-])`;
 
 /** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`). */
-export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?)`;
+export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?|none)`;
 
 /** Parse a numeric token as a 0-255 value or percentage. */
 export function parseChannel(token: string): number {
+  if (token === 'none') {
+    return 0;
+  }
   if (token.endsWith('%')) {
     return (Number.parseFloat(token) / 100) * 255;
   }
@@ -29,6 +32,9 @@ export function parseChannel(token: string): number {
 
 /** Parse a percentage token to a 0-1 value. */
 export function parsePercent(token: string): number {
+  if (token === 'none') {
+    return 0;
+  }
   if (token.endsWith('%')) {
     return Number.parseFloat(token) / 100;
   }
@@ -40,11 +46,17 @@ export function parseAlpha(token: string | undefined): number {
   if (token === undefined) {
     return 1;
   }
+  if (token === 'none') {
+    return 0;
+  }
   return parsePercent(token);
 }
 
 /** Parse a hue token with optional unit into degrees. */
 export function parseHue(token: string): number {
+  if (token === 'none') {
+    return 0;
+  }
   const value = Number.parseFloat(token);
   if (token.endsWith('deg') || token.endsWith('°')) {
     return value;
