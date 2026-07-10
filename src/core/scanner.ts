@@ -9,7 +9,8 @@ import * as vscode from 'vscode';
 import { resolveDocumentConfig } from '@/config';
 import { getProviderColors } from '@/providers/documentColorBridge';
 import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
-import { extractColors, hasOverlap } from './colorParser';
+import { mergeNonOverlapping } from '@/utils/ranges';
+import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
 import { areVariablesEqual, clearVariablesForUri, getVariablesForUri } from './variableManager';
 
@@ -32,44 +33,7 @@ function mergeMatches(
   // Provider matches from VS Code might not be strictly sorted. Sort them.
   providerMatches.sort((a, b) => a.startOffset - b.startOffset);
 
-  // Filter out any provider matches that overlap with our regex matches
-  // (since regex matches have absolute priority).
-  const filteredProviders = providerMatches.filter(
-    (pm) => !hasOverlap(regexMatches, pm.startOffset, pm.endOffset)
-  );
-
-  // Filter overlaps within the provider matches themselves, just in case
-  // the language server returned overlapping/duplicate ranges.
-  const finalProviders: ColorMatch[] = [];
-  let lastEnd = -1;
-  for (const pm of filteredProviders) {
-    if (pm.startOffset >= lastEnd) {
-      finalProviders.push(pm);
-      lastEnd = pm.endOffset;
-    }
-  }
-
-  // Linear merge `regexMatches` (which are already sorted and non-overlapping) and `finalProviders`.
-  const merged: ColorMatch[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < regexMatches.length && j < finalProviders.length) {
-    if (regexMatches[i].startOffset <= finalProviders[j].startOffset) {
-      merged.push(regexMatches[i]);
-      i += 1;
-    } else {
-      merged.push(finalProviders[j]);
-      j += 1;
-    }
-  }
-  while (i < regexMatches.length) {
-    merged.push(regexMatches[i]);
-    i += 1;
-  }
-  while (j < finalProviders.length) {
-    merged.push(finalProviders[j]);
-    j += 1;
-  }
+  const merged = mergeNonOverlapping(regexMatches, providerMatches, true);
 
   // Convert to VS Code ranges and filter by `options.scanRange`.
   const results: { range: vscode.Range; color: ColorData }[] = [];

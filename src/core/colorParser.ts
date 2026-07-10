@@ -29,48 +29,7 @@ const CLASS_RE = new RegExp(
 
 // --------------------------------------- HELPERS ---------------------------------------
 
-export function hasOverlap(sortedMatches: ColorMatch[], start: number, end: number): boolean {
-  let left = 0;
-  let right = sortedMatches.length - 1;
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    const iv = sortedMatches[mid];
-    if (end <= iv.startOffset) {
-      right = mid - 1;
-    } else if (start >= iv.endOffset) {
-      left = mid + 1;
-    } else {
-      return true;
-    }
-  }
-  return false;
-}
-
-function mergeNonOverlapping(target: ColorMatch[], newMatches: ColorMatch[]): ColorMatch[] {
-  // `target` and `newMatches` are assumed to be sorted by `startOffset`.
-  const filtered = newMatches.filter((m) => !hasOverlap(target, m.startOffset, m.endOffset));
-  const merged: ColorMatch[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < target.length && j < filtered.length) {
-    if (target[i].startOffset <= filtered[j].startOffset) {
-      merged.push(target[i]);
-      i += 1;
-    } else {
-      merged.push(filtered[j]);
-      j += 1;
-    }
-  }
-  while (i < target.length) {
-    merged.push(target[i]);
-    i += 1;
-  }
-  while (j < filtered.length) {
-    merged.push(filtered[j]);
-    j += 1;
-  }
-  return merged;
-}
+import { mergeNonOverlapping } from '@/utils/ranges';
 
 const regexCache = new Map<string, RegExp>();
 function getRegex(options: DocumentResolvedConfig): RegExp {
@@ -253,13 +212,7 @@ export function extractColors(
 
   // Pre-calculate comment ranges to avoid registering commented-out variable definitions.
   const commentRanges: { start: number; end: number }[] = [];
-  for (const match of text.matchAll(/\/\*[\s\S]*?\*\//g)) {
-    commentRanges.push({ end: match.index + match[0].length, start: match.index });
-  }
-  for (const match of text.matchAll(/<!--[\s\S]*?-->/g)) {
-    commentRanges.push({ end: match.index + match[0].length, start: match.index });
-  }
-  for (const match of text.matchAll(/(?<!:)\/\/.*$/gm)) {
+  for (const match of text.matchAll(/\/\*[\s\S]*?\*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm)) {
     commentRanges.push({ end: match.index + match[0].length, start: match.index });
   }
   commentRanges.sort((a, b) => a.start - b.start);
