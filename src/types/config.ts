@@ -19,6 +19,8 @@ export interface ExtensionConfig {
   // Matching
   /** Whether to enable named color marking. */
   markNamedColors: boolean;
+  /** Array of language IDs to enable CSS, SCSS, and LESS variable marking. */
+  markVariables: string[];
   /** Array of language IDs to enable Tailwind CSS class marking. */
   markTailwind: string[];
   /** Array of language IDs to match raw RGB numbers (e.g. `255, 0, 0`). */
@@ -51,6 +53,8 @@ export interface DocumentResolvedConfig {
   markNamedColors: boolean;
   /** True if Tailwind CSS classes should be marked. */
   markTailwind: boolean;
+  /** True if CSS variables should be marked. */
+  markVariables: boolean;
   /** True if raw RGB numbers should be matched. */
   matchRgbWithNoFunction: boolean;
   /** True if raw HSL numbers should be matched. */

@@ -280,7 +280,9 @@ export function extractColors(
   results = pass1;
 
   // [2] CSS Variable Usages.
-  results = mergeNonOverlapping(results, extractVariableUsages(text));
+  if (options.markVariables) {
+    results = mergeNonOverlapping(results, extractVariableUsages(text));
+  }
 
   // [3] Tailwind Classes.
   if (options.markTailwind) {

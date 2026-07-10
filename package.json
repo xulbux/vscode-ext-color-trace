@@ -111,6 +111,16 @@
           "default": true,
           "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
         },
+        "colorTracr.markVariables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "*"
+          ],
+          "description": "Mark CSS, SCSS, and LESS variables when they are used. Language IDs to mark. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
+        },
         "colorTracr.markTailwind": {
           "type": "array",
           "items": {
