@@ -132,17 +132,47 @@ export async function scanEditor(
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
 
+  // [2.5] Immediately apply fast regex matches for zero-latency feedback.
+  const fastResults: { range: vscode.Range; color: ColorData }[] = [];
+  for (const match of regexMatches) {
+    const range = new vscode.Range(
+      doc.positionAt(match.startOffset),
+      doc.positionAt(match.endOffset)
+    );
+    if (scanRange.contains(range)) {
+      fastResults.push({ color: match.color, range });
+    }
+  }
+
+  // Cache the fast results immediately so subsequent quick re-scans (like scrolling) hit the cache.
+  cache.set(uri, { results: fastResults, version });
+  applyDecorations(editor, fastResults, docConfig);
+
   // [3] DocumentColorProvider bridge (async, non-blocking).
-  const providerMatches = await getProviderColors(doc, docConfig);
+  // We do not await this so the initial regex colors render instantly.
+  getProviderColors(doc, docConfig)
+    .then((providerMatches) => {
+      // If the document changed while we were waiting, or there are no provider matches, discard.
+      if (doc.version !== version || providerMatches.length === 0) {
+        return;
+      }
 
-  // [4] Merge & deduplicate.
-  const merged = mergeMatches(regexMatches, providerMatches, { doc, rangeOffset: 0, scanRange });
+      // [4] Merge & deduplicate.
+      const merged = mergeMatches(regexMatches, providerMatches, {
+        doc,
+        rangeOffset: 0,
+        scanRange,
+      });
 
-  // [5] Cache full results.
-  cache.set(uri, { results: merged, version });
+      // [5] Cache full results.
+      cache.set(uri, { results: merged, version });
 
-  // [6] Apply decorations.
-  applyDecorations(editor, merged, docConfig);
+      // [6] Apply updated decorations.
+      applyDecorations(editor, merged, docConfig);
+    })
+    .catch(() => {
+      // Ignore provider errors.
+    });
 }
 
 /**

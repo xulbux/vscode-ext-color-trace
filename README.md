@@ -2,9 +2,10 @@
 
 # Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
-### Fast, readable web color marking in the editor.
+### Highly performant, ultra-lightweight color marking extension for the editor.
 
-This VS Code extension provides blazing fast color marking for modern web formats, including CSS variables, Tailwind classes, and wide-gamut colors.
+This VS Code extension provides color marking for various formats, including CSS variables, Tailwind classes, and wide-gamut colors.<br>
+It is built to be fast, lightweight, and resource-efficient, featuring **zero runtime dependencies**, so your editor never slows down.
 
 > <br>
 > 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.

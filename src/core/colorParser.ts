@@ -12,8 +12,9 @@ import { getVariable, setVariable } from './variableManager';
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
-/** Word regex for named color lookup (letters only, 3-30 chars to skip noise). */
-const WORD_RE = /\b[a-zA-Z]{3,30}\b/g;
+/** Word regex for named color lookup (only valid CSS named colors). */
+const NAMED_COLORS_KEYS = [...NAMED_COLORS.keys()].join('|');
+const WORD_RE = new RegExp(`\\b(?:${NAMED_COLORS_KEYS})\\b`, 'gi');
 
 /** Matches `var(--name)` and `var(--name, fallback)` but we only capture up to the name. */
 const VAR_USE_RE = /var\(\s*(?<name>--[a-zA-Z0-9-_]+)/g;
