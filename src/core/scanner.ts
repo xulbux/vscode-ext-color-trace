@@ -28,23 +28,21 @@ const cache = new Map<string, CacheEntry>();
 function mergeMatches(
   regexMatches: ColorMatch[],
   providerMatches: ColorMatch[],
-  options: { doc: vscode.TextDocument; rangeOffset: number; scanRange: vscode.Range }
+  doc: vscode.TextDocument
 ): { range: vscode.Range; color: ColorData }[] {
   // Provider matches from VS Code might not be strictly sorted. Sort them.
   providerMatches.sort((a, b) => a.startOffset - b.startOffset);
 
-  const merged = mergeNonOverlapping(regexMatches, providerMatches, true);
+  const merged = mergeNonOverlapping(providerMatches, regexMatches, true);
 
-  // Convert to VS Code ranges and filter by `options.scanRange`.
+  // Convert to VS Code ranges.
   const results: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of merged) {
     const range = new vscode.Range(
-      options.doc.positionAt(match.startOffset),
-      options.doc.positionAt(match.endOffset)
+      doc.positionAt(match.startOffset),
+      doc.positionAt(match.endOffset)
     );
-    if (options.scanRange.contains(range)) {
-      results.push({ color: match.color, range });
-    }
+    results.push({ color: match.color, range });
   }
 
   return results;
@@ -118,9 +116,6 @@ export async function scanEditor(
     return;
   }
 
-  const lastLine = doc.lineCount - 1;
-  const scanRange = new vscode.Range(0, 0, lastLine, doc.lineAt(lastLine).text.length);
-
   // [2] Regex-based extraction.
   const beforeVars = getVariablesForUri(uri);
   clearVariablesForUri(uri);
@@ -146,7 +141,7 @@ export async function scanEditor(
       doc.positionAt(match.startOffset),
       doc.positionAt(match.endOffset)
     );
-    if (scanRange.contains(range) && !hasDiagnosticOverlap(range, diagnostics)) {
+    if (!hasDiagnosticOverlap(range, diagnostics)) {
       fastResults.push({ color: match.color, range });
     }
   }
@@ -165,11 +160,7 @@ export async function scanEditor(
       }
 
       // [4] Merge & deduplicate.
-      const merged = mergeMatches(regexMatches, providerMatches, {
-        doc,
-        rangeOffset: 0,
-        scanRange,
-      });
+      const merged = mergeMatches(regexMatches, providerMatches, doc);
 
       // Filter merged results against diagnostics as well.
       const filteredMerged = merged.filter((m) => !hasDiagnosticOverlap(m.range, diagnostics));
@@ -177,8 +168,12 @@ export async function scanEditor(
       // [5] Cache full results.
       cache.set(uri, { results: filteredMerged, version });
 
-      // [6] Apply updated decorations.
-      applyDecorations(editor, filteredMerged, docConfig);
+      // [6] Apply updated decorations to all visible editors for this document.
+      for (const visibleEditor of vscode.window.visibleTextEditors) {
+        if (visibleEditor.document === doc) {
+          applyDecorations(visibleEditor, filteredMerged, docConfig);
+        }
+      }
     })
     .catch(() => {
       // Ignore provider errors.

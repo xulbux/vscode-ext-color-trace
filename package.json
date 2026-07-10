@@ -169,7 +169,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Parse 8-character hex codes as `#AARRGGBB` instead of `#RRGGBBAA`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Parse hex codes with alpha as ARGB instead of RGBA (i.e. `#AARRGGBB` and `#ARGB`). Language IDs to mark. Use `*` to enable for all."
         }
       }
     }

@@ -35,7 +35,19 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
   <tbody>
     <tr>
       <td align="left"><strong>Standard Colors</strong></td>
-      <td align="left">HEX, RGB, HSL, HWB, OKLCH, OKLAB</td>
+      <td align="left">HEX, RGB, HSL, HWB, HSV, CMYK, OKLCH, LCH, OKLAB, LAB</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Color Spaces</strong></td>
+      <td align="left"><code>color(display-p3 …)</code>, <code>color(srgb-linear …)</code>, <code>a98-rgb</code>, <code>rec2020</code>, <code>xyz</code>, etc.</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Apple / Swift</strong></td>
+      <td align="left"><code>UIColor(red: …)</code>, <code>Color(red: …)</code></td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Raw Number Matching</strong></td>
+      <td align="left">Detects raw CSS channels (e.g., <code>255, 0, 0</code> or <code>60% 0.15 25</code>) to support opacity modifiers in frameworks like Tailwind CSS.</td>
     </tr>
     <tr>
       <td align="left"><strong>Named Colors</strong></td>

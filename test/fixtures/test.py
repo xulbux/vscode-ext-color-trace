@@ -2,7 +2,7 @@
 
 
 class Theme:
-    PRIMARY = '#9670FF'
+    PRIMARY = "#9670FF"
     SECONDARY = "#D270FF"
     BACKGROUND = "#1E1E1E"
     TEXT = "rgba(255, 255, 255, 0.8)"

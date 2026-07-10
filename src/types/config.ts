@@ -31,7 +31,7 @@ export interface ExtensionConfig {
   matchLchWithNoFunction: string[];
   /** Array of language IDs to match raw OKLCH numbers. */
   matchOklchWithNoFunction: string[];
-  /** Array of language IDs to interpret 8-digit hexes as ARGB instead of RGBA. */
+  /** Array of language IDs to interpret 4- and 8-digit hexes as ARGB instead of RGBA. */
   useARGB: string[];
 }
 

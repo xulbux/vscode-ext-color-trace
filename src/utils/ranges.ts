@@ -26,7 +26,7 @@ export function hasOverlap(sortedMatches: ColorMatch[], start: number, end: numb
 }
 
 /**
- * Filter out any `newMatches` that overlap with `target` matches,
+ * Filter out any `newMatches` that overlap with `target` matches (prioritizing `target` matches),
  * optionally remove overlaps within the filtered `newMatches` themselves,
  * and merge both arrays into a single sorted array.
  * Both `target` and `newMatches` are expected to be sorted by `startOffset`.
