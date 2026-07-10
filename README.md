@@ -1,6 +1,6 @@
 <span id="top" />
 
-# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="36" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
 ### Highly performant, ultra-lightweight color marking extension for the editor.
 
@@ -68,6 +68,13 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 <a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
 
 <br>
+<br>
+
+## Acknowledgments 🤝
+
+This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
+`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, zero-dependency architecture.
+
 <br>
 <br>
 
