@@ -15,12 +15,15 @@ import {
 import { parseHex } from './hex';
 
 export const rgbStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts RGB color data from a matched string.
+   */
   // oxlint-disable-next-line complexity
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    let r = 0,
-      g = 0,
-      b = 0,
-      a = 1;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let a = 1;
     const lower = matchText.trim().toLowerCase();
 
     // Check if it's a raw match (no function wrapper).
@@ -40,9 +43,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       if (tokens.slice(0, 3).some((t) => t.includes('%'))) {
         return undefined;
       }
-      r = clampChannel(parseChannel(tokens[0]));
-      g = clampChannel(parseChannel(tokens[1]));
-      b = clampChannel(parseChannel(tokens[2]));
+      const [rVal, gVal, bVal] = tokens.slice(0, 3).map((t) => parseChannel(t));
+      r = clampChannel(rVal);
+      g = clampChannel(gVal);
+      b = clampChannel(bVal);
       a = clampAlpha(parseAlpha(tokens[3]));
 
       if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
@@ -86,9 +90,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       a = clampAlpha(
         tokens[0].includes('%') || alphaVal <= 1 ? parseAlpha(tokens[0]) : alphaVal / 255
       );
-      r = clampChannel(parseChannel(tokens[1]));
-      g = clampChannel(parseChannel(tokens[2]));
-      b = clampChannel(parseChannel(tokens[3]));
+      const [rVal, gVal, bVal] = tokens.slice(1, 4).map((t) => parseChannel(t));
+      r = clampChannel(rVal);
+      g = clampChannel(gVal);
+      b = clampChannel(bVal);
 
       if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
         return undefined;
@@ -98,9 +103,10 @@ export const rgbStrategy: ColorParsingStrategy = {
       return { css: `rgba(${r}, ${g}, ${b}, ${a})`, opaqueCss, rgba: { a, b, g, r } };
     }
 
-    r = clampChannel(parseChannel(tokens[0]));
-    g = clampChannel(parseChannel(tokens[1]));
-    b = clampChannel(parseChannel(tokens[2]));
+    const [rVal, gVal, bVal] = tokens.slice(0, 3).map((t) => parseChannel(t));
+    r = clampChannel(rVal);
+    g = clampChannel(gVal);
+    b = clampChannel(bVal);
     a = clampAlpha(parseAlpha(tokens[3]));
 
     if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b) || Number.isNaN(a)) {
@@ -110,6 +116,9 @@ export const rgbStrategy: ColorParsingStrategy = {
     const opaqueCss = `rgb(${r}, ${g}, ${b})`;
     return { css: matchText, opaqueCss, rgba: { a, b, g, r } };
   },
+  /**
+   * Gets dynamically generated regex patterns for this strategy.
+   */
   getPatterns(options?: DocumentResolvedConfig): string[] {
     const patterns = [this.pattern];
     if (options?.matchRgbWithNoFunction) {

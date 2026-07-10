@@ -6,11 +6,13 @@
  */
 
 import * as vscode from 'vscode';
+import { resolveDocumentConfig } from '@/config';
 import { getProviderColors } from '@/providers/documentColorBridge';
 import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
-import { extractColors, hasOverlap } from './colorParser';
+import { mergeNonOverlapping } from '@/utils/ranges';
+import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
-import { clearVariablesForUri } from './variableManager';
+import { areVariablesEqual, clearVariablesForUri, getVariablesForUri } from './variableManager';
 
 // ---------------------------------------- CACHE ----------------------------------------
 
@@ -26,68 +28,57 @@ const cache = new Map<string, CacheEntry>();
 function mergeMatches(
   regexMatches: ColorMatch[],
   providerMatches: ColorMatch[],
-  options: { doc: vscode.TextDocument; rangeOffset: number; scanRange: vscode.Range }
+  doc: vscode.TextDocument
 ): { range: vscode.Range; color: ColorData }[] {
   // Provider matches from VS Code might not be strictly sorted. Sort them.
   providerMatches.sort((a, b) => a.startOffset - b.startOffset);
 
-  // Filter out any provider matches that overlap with our regex matches
-  // (since regex matches have absolute priority).
-  const filteredProviders = providerMatches.filter(
-    (pm) => !hasOverlap(regexMatches, pm.startOffset, pm.endOffset)
-  );
+  const merged = mergeNonOverlapping(providerMatches, regexMatches, true);
 
-  // Filter overlaps within the provider matches themselves, just in case
-  // the language server returned overlapping/duplicate ranges.
-  const finalProviders: ColorMatch[] = [];
-  let lastEnd = -1;
-  for (const pm of filteredProviders) {
-    if (pm.startOffset >= lastEnd) {
-      finalProviders.push(pm);
-      lastEnd = pm.endOffset;
-    }
-  }
-
-  // Linear merge `regexMatches` (which are already sorted and non-overlapping) and `finalProviders`.
-  const merged: ColorMatch[] = [];
-  let i = 0;
-  let j = 0;
-  while (i < regexMatches.length && j < finalProviders.length) {
-    if (regexMatches[i].startOffset <= finalProviders[j].startOffset) {
-      merged.push(regexMatches[i]);
-      i += 1;
-    } else {
-      merged.push(finalProviders[j]);
-      j += 1;
-    }
-  }
-  while (i < regexMatches.length) {
-    merged.push(regexMatches[i]);
-    i += 1;
-  }
-  while (j < finalProviders.length) {
-    merged.push(finalProviders[j]);
-    j += 1;
-  }
-
-  // Convert to VS Code ranges and filter by `options.scanRange`.
+  // Convert to VS Code ranges.
   const results: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of merged) {
     const range = new vscode.Range(
-      options.doc.positionAt(match.startOffset),
-      options.doc.positionAt(match.endOffset)
+      doc.positionAt(match.startOffset),
+      doc.positionAt(match.endOffset)
     );
-    if (options.scanRange.contains(range)) {
-      results.push({ color: match.color, range });
-    }
+    results.push({ color: match.color, range });
   }
 
   return results;
 }
 
-import { resolveDocumentConfig } from '@/config';
+/**
+ * Check if the given range overlaps with any error or warning diagnostics.
+ */
+function hasDiagnosticOverlap(range: vscode.Range, diagnostics: vscode.Diagnostic[]): boolean {
+  for (const diag of diagnostics) {
+    if (
+      (diag.severity === vscode.DiagnosticSeverity.Error ||
+        diag.severity === vscode.DiagnosticSeverity.Warning) &&
+      diag.range.intersection(range)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
 // -------------------------------------- PUBLIC API -------------------------------------
+
+/**
+ * Invalidate the cache for a specific document.
+ */
+export function invalidateCache(uri: string): void {
+  cache.delete(uri);
+}
+
+/**
+ * Clear the entire scan cache.
+ */
+export function clearCache(): void {
+  cache.clear();
+}
 
 /**
  * Scan the visible portions of an editor for colors and apply decorations.
@@ -125,36 +116,66 @@ export async function scanEditor(
     return;
   }
 
-  const lastLine = doc.lineCount - 1;
-  const scanRange = new vscode.Range(0, 0, lastLine, doc.lineAt(lastLine).text.length);
-
   // [2] Regex-based extraction.
+  const beforeVars = getVariablesForUri(uri);
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
+  const afterVars = getVariablesForUri(uri);
+  const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+
+  if (!areVariablesEqual(beforeVars, afterVars)) {
+    for (const visibleEditor of vscode.window.visibleTextEditors) {
+      if (visibleEditor.document.uri.toString() !== uri) {
+        invalidateCache(visibleEditor.document.uri.toString());
+        scanEditor(visibleEditor, config).catch(() => {
+          // Ignore.
+        });
+      }
+    }
+  }
+
+  // [2.5] Immediately apply fast regex matches for zero-latency feedback.
+  const fastResults: { range: vscode.Range; color: ColorData }[] = [];
+  for (const match of regexMatches) {
+    const range = new vscode.Range(
+      doc.positionAt(match.startOffset),
+      doc.positionAt(match.endOffset)
+    );
+    if (!hasDiagnosticOverlap(range, diagnostics)) {
+      fastResults.push({ color: match.color, range });
+    }
+  }
+
+  // Cache the fast results immediately so subsequent quick re-scans (like scrolling) hit the cache.
+  cache.set(uri, { results: fastResults, version });
+  applyDecorations(editor, fastResults, docConfig);
 
   // [3] DocumentColorProvider bridge (async, non-blocking).
-  const providerMatches = await getProviderColors(doc, docConfig);
+  // We do not await this so the initial regex colors render instantly.
+  getProviderColors(doc, docConfig)
+    .then((providerMatches) => {
+      // If the document changed while we were waiting, or there are no provider matches, discard.
+      if (doc.version !== version || providerMatches.length === 0) {
+        return;
+      }
 
-  // [4] Merge & deduplicate.
-  const merged = mergeMatches(regexMatches, providerMatches, { doc, rangeOffset: 0, scanRange });
+      // [4] Merge & deduplicate.
+      const merged = mergeMatches(regexMatches, providerMatches, doc);
 
-  // [5] Cache full results.
-  cache.set(uri, { results: merged, version });
+      // Filter merged results against diagnostics as well.
+      const filteredMerged = merged.filter((m) => !hasDiagnosticOverlap(m.range, diagnostics));
 
-  // [6] Apply decorations.
-  applyDecorations(editor, merged, docConfig);
-}
+      // [5] Cache full results.
+      cache.set(uri, { results: filteredMerged, version });
 
-/**
- * Invalidate the cache for a specific document.
- */
-export function invalidateCache(uri: string): void {
-  cache.delete(uri);
-}
-
-/**
- * Clear the entire scan cache.
- */
-export function clearCache(): void {
-  cache.clear();
+      // [6] Apply updated decorations to all visible editors for this document.
+      for (const visibleEditor of vscode.window.visibleTextEditors) {
+        if (visibleEditor.document === doc) {
+          applyDecorations(visibleEditor, filteredMerged, docConfig);
+        }
+      }
+    })
+    .catch(() => {
+      // Ignore provider errors.
+    });
 }

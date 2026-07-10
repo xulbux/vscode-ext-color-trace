@@ -34,11 +34,29 @@
   /* HWB */
   --color-hwb: hwb(256 44% 0%);
 
-  /* OKLCH (Wide Gamut) */
+  /* HSV / HSVA */
+  --color-hsv: hsv(256, 100%, 72%);
+  --color-hsva: hsva(256 100% 72% / 0.5);
+
+  /* CMYK */
+  --color-cmyk: device-cmyk(0 81% 81% 30%);
+  --color-cmyk-alpha: device-cmyk(0 81% 81% 30% / 0.5);
+
+  /* Wide Gamut */
   --color-oklch: oklch(60% 0.15 25);
+  --color-oklch-tp: oklch(60% 0.15 25 / 0.5);
   --color-lch: lch(60% 40 25);
+  --color-lch-tp: lch(60% 40 25 / 0.5);
   --color-oklab: oklab(0.6 0.1 0.1);
+  --color-oklab-tp: oklab(0.6 0.1 0.1 / 0.5);
   --color-lab: lab(60 20 20);
+  --color-lab-tp: lab(60 20 20 / 0.5);
+
+  /* Raw Formats */
+  --raw-oklch: 60% 0.15 25;
+  --raw-oklch-tp: 60% 0.15 25 / 0.5;
+  --raw-lch: 60% 40 25 / 0.5;
+  --raw-lch-tp: 60% 40 25 / 0.5;
 }
 
 /********************************** Color Formats *********************************/
@@ -51,7 +69,7 @@
 }
 
 .rgb-hsl-test {
-  color: rgb(255, 142, 83);
+  color: rgb(255, 128, 96);
   outline-color: hsla(359, 100%, 68%, 1);
   border-top-color: hsl(281 100% 72% / 0.8);
   background: rgba(150, 112, 255, 0.5);

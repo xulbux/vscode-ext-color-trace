@@ -11,12 +11,17 @@ import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/conf
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, disposeAll } from '@/core/decorationManager';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
-import { clearVariablesForUri } from '@/core/variableManager';
+import {
+  areVariablesEqual,
+  clearVariablesForUri,
+  getVariablesForUri,
+} from '@/core/variableManager';
 import type { ExtensionConfig } from '@/types';
 
 // ---------------------------------------- STATE ----------------------------------------
 
 let updateTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+const changedDocuments = new Set<vscode.TextDocument>();
 
 /** How long to wait after the last keystroke before re-scanning (ms). */
 const EDIT_DEBOUNCE = 150;
@@ -45,9 +50,12 @@ export function activate(context: vscode.ExtensionContext): void {
     // [1] Instantly scan visible editors (they might only have local colors).
     scanAllVisible(config);
 
+    const excludePattern =
+      config.excludePaths.length > 0 ? `{${config.excludePaths.join(',')}}` : undefined;
+
     // [2] Scan workspace for CSS variables in the background, then re-scan visible editors.
     vscode.workspace
-      .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', '**/node_modules/**', 100)
+      .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', excludePattern, 500)
       .then(async (uris) => {
         for (let i = 0; i < uris.length; i += 5) {
           const chunk = uris.slice(i, i + 5);
@@ -56,11 +64,18 @@ export function activate(context: vscode.ExtensionContext): void {
             chunk.map(async (uri) => {
               try {
                 const bytes = await vscode.workspace.fs.readFile(uri);
+                if (bytes.length > 500_000) {
+                  // Skip massive minified files to prevent high memory usage and extension host freezing.
+                  return;
+                }
+
                 const text = new TextDecoder().decode(bytes);
                 const uriStr = uri.toString();
+
                 clearVariablesForUri(uriStr);
                 extractColors(text, 'css', {
                   ...resolveDocumentConfig(config, 'css'),
+                  extractOnly: true,
                   uri: uriStr,
                 });
               } catch {
@@ -94,15 +109,42 @@ export function activate(context: vscode.ExtensionContext): void {
 
       // Invalidate cache for the changed document.
       invalidateCache(event.document.uri.toString());
+      changedDocuments.add(event.document);
 
       // Debounce: wait for the user to stop typing.
       if (updateTimer !== undefined) {
         clearTimeout(updateTimer);
       }
       updateTimer = setTimeout(() => {
-        for (const editor of vscode.window.visibleTextEditors) {
-          if (editor.document === event.document) {
-            triggerScan(editor, config);
+        const docs = [...changedDocuments];
+        changedDocuments.clear();
+
+        for (const doc of docs) {
+          let isVisible = false;
+          for (const editor of vscode.window.visibleTextEditors) {
+            if (editor.document === doc) {
+              isVisible = true;
+              triggerScan(editor, config);
+            }
+          }
+
+          if (!isVisible) {
+            const uriStr = doc.uri.toString();
+            const beforeVars = getVariablesForUri(uriStr);
+            clearVariablesForUri(uriStr);
+            extractColors(doc.getText(), doc.languageId, {
+              ...resolveDocumentConfig(config, doc.languageId),
+              extractOnly: true,
+              uri: uriStr,
+            });
+            const afterVars = getVariablesForUri(uriStr);
+
+            if (!areVariablesEqual(beforeVars, afterVars)) {
+              for (const visibleEditor of vscode.window.visibleTextEditors) {
+                invalidateCache(visibleEditor.document.uri.toString());
+                triggerScan(visibleEditor, config);
+              }
+            }
           }
         }
       }, EDIT_DEBOUNCE);
@@ -138,6 +180,51 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // --- Files deleted/renamed; Clean up variables ---
+  context.subscriptions.push(
+    vscode.workspace.onDidDeleteFiles((event) => {
+      for (const file of event.files) {
+        clearVariablesForUri(file.toString());
+      }
+    }),
+    vscode.workspace.onDidRenameFiles((event) => {
+      for (const file of event.files) {
+        clearVariablesForUri(file.oldUri.toString());
+      }
+    })
+  );
+
+  let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
+  // --- Diagnostics changed (errors/warnings) ---
+  context.subscriptions.push(
+    vscode.languages.onDidChangeDiagnostics((event) => {
+      if (!config.enable) {
+        return;
+      }
+
+      let needsScan = false;
+      for (const uri of event.uris) {
+        const uriStr = uri.toString();
+        for (const editor of vscode.window.visibleTextEditors) {
+          if (editor.document.uri.toString() === uriStr) {
+            invalidateCache(uriStr);
+            needsScan = true;
+          }
+        }
+      }
+
+      if (needsScan) {
+        if (diagTimer !== undefined) {
+          clearTimeout(diagTimer);
+        }
+        diagTimer = setTimeout(() => {
+          scanAllVisible(config);
+        }, EDIT_DEBOUNCE);
+      }
+    })
+  );
+
   // --- Configuration changed ---
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {
@@ -152,7 +239,7 @@ export function activate(context: vscode.ExtensionContext): void {
         if (config.enable) {
           scanAllVisible(config);
         } else {
-          // Extension disabled; Remove all decorations
+          // Extension disabled; Remove all decorations.
           for (const editor of vscode.window.visibleTextEditors) {
             clearDecorations(editor);
           }

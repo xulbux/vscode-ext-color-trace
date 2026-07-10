@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import type { ColorData, DecorationEntry, DocumentResolvedConfig } from '@/types';
-import { alphaBlend, relativeLuminance, rgbaToHexString } from '@/utils/color';
+import { alphaBlend, relativeLuminance } from '@/utils/color';
 
 // ---------------------------------------- CACHE ----------------------------------------
 
@@ -50,7 +50,7 @@ function styleFingerprint(
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
   // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
-  let borderColor = isTransparent ? rgbaToHexString({ ...rgba, a: 1 }) : bgCss;
+  let borderColor = isTransparent ? color.opaqueCss : bgCss;
   if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
     borderColor = 'transparent';
   }
@@ -85,17 +85,23 @@ function createEntry(fingerprint: string): DecorationEntry {
     }
   }
 
-  let decoOptions: vscode.DecorationRenderOptions = { backgroundColor: 'transparent' };
+  let decoOptions: vscode.DecorationRenderOptions = {
+    backgroundColor: 'transparent',
+    rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+  };
 
   if (type === 'dot-before' || type === 'dot-after') {
     const shadowColor = outline ? outline.replace('1px solid ', '') : 'transparent';
     const dot = {
       backgroundColor: bg,
-      contentText: '\u200a',
+      contentText: '',
       margin: type === 'dot-before' ? '0 0.25em 0 0.1em' : '0 0.1em 0 0.25em',
       textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.9em; height: 0.9em; vertical-align: middle; transform: translateY(-8%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
     };
-    decoOptions = type === 'dot-before' ? { before: dot } : { after: dot };
+    decoOptions = {
+      ...(type === 'dot-before' ? { before: dot } : { after: dot }),
+      rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+    };
   } else {
     decoOptions = {
       backgroundColor: bg,
@@ -105,6 +111,7 @@ function createEntry(fingerprint: string): DecorationEntry {
       borderWidth: '0.2em 0.06em',
       color: fg,
       outline,
+      rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
     };
   }
 

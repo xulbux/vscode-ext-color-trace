@@ -35,9 +35,21 @@ export async function getProviderColors(
     const matches: ColorMatch[] = [];
 
     for (const info of colors) {
-      const startOffset = document.offsetAt(info.range.start);
-      const endOffset = document.offsetAt(info.range.end);
-      const originalText = document.getText(info.range);
+      let startOffset = document.offsetAt(info.range.start);
+      let endOffset = document.offsetAt(info.range.end);
+      let originalText = document.getText(info.range);
+
+      // Strip surrounding quotes if a language server (like Pylance) incorrectly includes them.
+      if (
+        originalText.length >= 2 &&
+        ((originalText.startsWith('"') && originalText.endsWith('"')) ||
+          (originalText.startsWith("'") && originalText.endsWith("'")) ||
+          (originalText.startsWith('`') && originalText.endsWith('`')))
+      ) {
+        originalText = originalText.slice(1, -1);
+        startOffset += 1;
+        endOffset -= 1;
+      }
 
       let isValid = true;
       if (originalText.includes('(')) {

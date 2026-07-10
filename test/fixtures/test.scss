@@ -1,0 +1,30 @@
+/* SCSS test fixture for Color Tracr */
+
+/* SCSS variables */
+$primary-color: #9670ff;
+$secondary-color: rgb(108, 108, 137);
+$bg-dark: color(display-p3 0.1 0.1 0.12);
+
+.button {
+  background-color: $primary-color;
+  color: $secondary-color;
+  border-color: $bg-dark;
+}
+
+/* LESS variables */
+@accent-color: hsl(12, 100%, 70%);
+
+.card {
+  box-shadow: 0 4px 10px @accent-color;
+}
+
+/* Modern CSS Color Function */
+.p3-box {
+  background: color(display-p3 1 0 0.32);
+  border: 1px solid color(srgb-linear 0.8 0.2 0.3 / 50%);
+}
+
+/* Tailwind Arbitrary Values */
+.custom-tw-bg {
+  @apply bg-[#661616] text-[rgb(255,100,100)];
+}

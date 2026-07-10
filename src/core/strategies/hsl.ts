@@ -15,11 +15,14 @@ import {
 } from '@/utils/strategy';
 
 export const hslStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts HSL color data from a matched string.
+   */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    let h = 0,
-      s = 0,
-      l = 0,
-      a = 1;
+    let h = 0;
+    let s = 0;
+    let l = 0;
+    let a = 1;
     const lower = matchText.trim().toLowerCase();
 
     if (!lower.startsWith('hsl')) {
@@ -34,8 +37,9 @@ export const hslStrategy: ColorParsingStrategy = {
         return undefined;
       }
       h = parseHue(tokens[0]);
-      s = parsePercent(tokens[1]);
-      l = parsePercent(tokens[2]);
+      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
+      s = sVal;
+      l = lVal;
       a = clampAlpha(parseAlpha(tokens[3]));
     } else {
       const tokens = parseColorTokens(matchText, ['hsl']);
@@ -44,8 +48,9 @@ export const hslStrategy: ColorParsingStrategy = {
       }
 
       h = parseHue(tokens[0]);
-      s = parsePercent(tokens[1]);
-      l = parsePercent(tokens[2]);
+      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
+      s = sVal;
+      l = lVal;
       a = clampAlpha(parseAlpha(tokens[3]));
     }
 
@@ -62,6 +67,9 @@ export const hslStrategy: ColorParsingStrategy = {
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },
+  /**
+   * Gets dynamically generated regex patterns for this strategy.
+   */
   getPatterns(options?: DocumentResolvedConfig): string[] {
     const patterns = [this.pattern];
     if (options?.matchHslWithNoFunction) {

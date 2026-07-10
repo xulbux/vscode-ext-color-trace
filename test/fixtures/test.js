@@ -18,6 +18,8 @@ const styledComponentStyles = {
     color: '#fff',
   },
   container: {
+    '--raw-oklch-token': '60% 0.15 25',
+    '--tw-bg-opacity': '1',
     backgroundColor: '#ffffff',
     borderBottom: '2px solid #e0e0e0',
     color: 'rgba(0, 0, 0, 0.87)',
@@ -25,4 +27,12 @@ const styledComponentStyles = {
   },
 };
 
-export { COLORS, styledComponentStyles };
+// Swift/Apple mock examples for regex tests
+const iOSColors = [
+  'UIColor(red: 1.0, green: 0.2, blue: 0.25, alpha: 1.0)',
+  'Color(red: 0.5, green: 0.5, blue: 0.6)',
+  'UIColor(red: 0.8, green: 0.8, blue: 0.9)',
+  'Color(red: 1, green: 0, blue: 0, opacity: 0.5)',
+];
+
+export { COLORS, styledComponentStyles, iOSColors };

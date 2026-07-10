@@ -1,8 +1,8 @@
 {
   "name": "color-tracr",
   "displayName": "Color Tracr",
-  "version": "1.0.0",
-  "description": "Fast, readable color marking in the editor.",
+  "version": "1.0.1",
+  "description": "Highly performant, ultra-lightweight color marking extension for the editor.",
   "categories": [
     "Other",
     "Visualization"
@@ -78,6 +78,19 @@
           ],
           "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
         },
+        "colorTracr.excludePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/.next/**"
+          ],
+          "description": "Folders and files to ignore during workspace scanning. Uses glob patterns."
+        },
         "colorTracr.markerType": {
           "type": "string",
           "default": "highlight",
@@ -97,6 +110,16 @@
           "type": "boolean",
           "default": true,
           "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
+        },
+        "colorTracr.markVariables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "*"
+          ],
+          "description": "Mark CSS, SCSS, and LESS variables when they are used. Language IDs to mark. Use `*` to enable for all, or prepend `!` to explicitly ignore a language."
         },
         "colorTracr.markTailwind": {
           "type": "array",
@@ -124,13 +147,29 @@
           "default": [],
           "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
         },
+        "colorTracr.matchLchWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw LCH numbers (e.g. `60% 40 25`) even when not wrapped in `lch()`. Language IDs to mark. Use `*` to enable for all."
+        },
+        "colorTracr.matchOklchWithNoFunction": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Mark raw OKLCH numbers (e.g. `60% 0.15 25`) even when not wrapped in `oklch()`. Language IDs to mark. Use `*` to enable for all."
+        },
         "colorTracr.useARGB": {
           "type": "array",
           "items": {
             "type": "string"
           },
           "default": [],
-          "description": "Parse 8-character hex codes as `#AARRGGBB` instead of `#RRGGBBAA`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Parse hex codes with alpha as ARGB instead of RGBA (i.e. `#AARRGGBB` and `#ARGB`). Language IDs to mark. Use `*` to enable for all."
         }
       }
     }

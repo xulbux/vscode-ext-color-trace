@@ -1,10 +1,11 @@
 <span id="top" />
 
-# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="32" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="36" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
-### Fast, readable web color marking in the editor.
+### Highly performant, ultra-lightweight color marking extension for the editor.
 
-This VS Code extension provides blazing fast color marking for modern web formats, including CSS variables, Tailwind classes, and wide-gamut colors.
+This VS Code extension provides color marking for various formats, including CSS variables, Tailwind classes, and wide-gamut colors.<br>
+It is built to be fast, lightweight, and resource-efficient, featuring **zero runtime dependencies**, so your editor never slows down.
 
 > <br>
 > 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
@@ -34,7 +35,19 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
   <tbody>
     <tr>
       <td align="left"><strong>Standard Colors</strong></td>
-      <td align="left">HEX, RGB, HSL, HWB, OKLCH, OKLAB</td>
+      <td align="left">HEX, RGB, HSL, HWB, HSV, CMYK, OKLCH, LCH, OKLAB, LAB</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Color Spaces</strong></td>
+      <td align="left"><code>color(display-p3 …)</code>, <code>color(srgb-linear …)</code>, <code>a98-rgb</code>, <code>rec2020</code>, <code>xyz</code>, etc.</td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Apple / Swift</strong></td>
+      <td align="left"><code>UIColor(red: …)</code>, <code>Color(red: …)</code></td>
+    </tr>
+    <tr>
+      <td align="left"><strong>Raw Number Matching</strong></td>
+      <td align="left">Detects raw CSS channels (e.g., <code>255, 0, 0</code> or <code>60% 0.15 25</code>) to support opacity modifiers in frameworks like Tailwind CSS.</td>
     </tr>
     <tr>
       <td align="left"><strong>Named Colors</strong></td>
@@ -67,6 +80,13 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 <a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
 
 <br>
+<br>
+
+## Acknowledgments 🤝
+
+This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
+`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, zero-dependency architecture.
+
 <br>
 <br>
 
