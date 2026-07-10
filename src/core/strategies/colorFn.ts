@@ -2,6 +2,9 @@ import type { ColorData, ColorParsingStrategy } from '@/types';
 import { ALPHA, NUM, clampAlpha, clampChannel, parseAlpha, parsePercent } from '@/utils/strategy';
 
 export const colorFnStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts color function data from a matched string.
+   */
   extract(matchText: string): ColorData | undefined {
     if (!matchText.trim().toLowerCase().startsWith('color(')) {
       return undefined;

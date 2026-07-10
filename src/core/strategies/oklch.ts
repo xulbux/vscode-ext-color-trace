@@ -32,6 +32,9 @@ function approximateRgbFromL(l: number): { r: number; g: number; b: number } {
 }
 
 export const oklchStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts OKLCH/LCH/OKLAB/LAB color data from a matched string.
+   */
   extract(matchText: string): ColorData | undefined {
     const tokens = parseColorTokens(matchText, ['oklch', 'lch', 'oklab', 'lab'], {
       allowCommas: false,

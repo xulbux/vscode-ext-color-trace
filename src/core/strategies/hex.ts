@@ -64,6 +64,9 @@ export function parseHex(
 }
 
 export const hexStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts hex color data from a matched string.
+   */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
     const match = /^(?:#|0x)(?<hexDigits>[0-9a-f]{3,8})$/i.exec(matchText.trim());
     if (!match) {

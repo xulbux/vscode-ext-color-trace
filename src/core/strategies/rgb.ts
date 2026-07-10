@@ -15,12 +15,15 @@ import {
 import { parseHex } from './hex';
 
 export const rgbStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts RGB color data from a matched string.
+   */
   // oxlint-disable-next-line complexity
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    let r = 0,
-      g = 0,
-      b = 0,
-      a = 1;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let a = 1;
     const lower = matchText.trim().toLowerCase();
 
     // Check if it's a raw match (no function wrapper).
@@ -113,6 +116,9 @@ export const rgbStrategy: ColorParsingStrategy = {
     const opaqueCss = `rgb(${r}, ${g}, ${b})`;
     return { css: matchText, opaqueCss, rgba: { a, b, g, r } };
   },
+  /**
+   * Gets dynamically generated regex patterns for this strategy.
+   */
   getPatterns(options?: DocumentResolvedConfig): string[] {
     const patterns = [this.pattern];
     if (options?.matchRgbWithNoFunction) {

@@ -13,6 +13,9 @@ import {
 } from '@/utils/strategy';
 
 export const hwbStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts HWB color data from a matched string.
+   */
   extract(matchText: string): ColorData | undefined {
     const tokens = parseColorTokens(matchText, ['hwb'], { allowCommas: false, minTokens: 3 });
     if (!tokens) {

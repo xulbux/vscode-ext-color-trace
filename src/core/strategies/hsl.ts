@@ -15,11 +15,14 @@ import {
 } from '@/utils/strategy';
 
 export const hslStrategy: ColorParsingStrategy = {
+  /**
+   * Extracts HSL color data from a matched string.
+   */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    let h = 0,
-      s = 0,
-      l = 0,
-      a = 1;
+    let h = 0;
+    let s = 0;
+    let l = 0;
+    let a = 1;
     const lower = matchText.trim().toLowerCase();
 
     if (!lower.startsWith('hsl')) {
@@ -64,6 +67,9 @@ export const hslStrategy: ColorParsingStrategy = {
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },
+  /**
+   * Gets dynamically generated regex patterns for this strategy.
+   */
   getPatterns(options?: DocumentResolvedConfig): string[] {
     const patterns = [this.pattern];
     if (options?.matchHslWithNoFunction) {

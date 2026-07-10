@@ -133,7 +133,7 @@ export async function scanEditor(
       if (visibleEditor.document.uri.toString() !== uri) {
         invalidateCache(visibleEditor.document.uri.toString());
         scanEditor(visibleEditor, config).catch(() => {
-          // Ignore
+          // Ignore.
         });
       }
     }

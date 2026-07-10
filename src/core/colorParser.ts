@@ -203,16 +203,20 @@ export function extractColors(
 ): ColorMatch[] {
   let results: ColorMatch[] = [];
 
-  // Pre-calculate comment ranges to avoid registering commented-out variable definitions.
-  const commentRanges: { start: number; end: number }[] = [];
-  for (const match of text.matchAll(
-    /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm
-  )) {
-    commentRanges.push({ end: match.index + match[0].length, start: match.index });
-  }
-  commentRanges.sort((a, b) => a.start - b.start);
+  // Lazy-calculate comment ranges to avoid registering commented-out variable definitions.
+  let commentRanges: { start: number; end: number }[] | undefined = undefined;
 
   function isInsideComment(index: number): boolean {
+    if (!commentRanges) {
+      commentRanges = [];
+      for (const match of text.matchAll(
+        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm
+      )) {
+        commentRanges.push({ end: match.index + match[0].length, start: match.index });
+      }
+      commentRanges.sort((a, b) => a.start - b.start);
+    }
+
     let left = 0;
     let right = commentRanges.length - 1;
     while (left <= right) {
