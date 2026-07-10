@@ -141,6 +141,37 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
+  // --- Diagnostics changed (errors/warnings) ---
+  context.subscriptions.push(
+    vscode.languages.onDidChangeDiagnostics((event) => {
+      if (!config.enable) {
+        return;
+      }
+
+      let needsScan = false;
+      for (const uri of event.uris) {
+        const uriStr = uri.toString();
+        for (const editor of vscode.window.visibleTextEditors) {
+          if (editor.document.uri.toString() === uriStr) {
+            invalidateCache(uriStr);
+            needsScan = true;
+          }
+        }
+      }
+
+      if (needsScan) {
+        if (diagTimer !== undefined) {
+          clearTimeout(diagTimer);
+        }
+        diagTimer = setTimeout(() => {
+          scanAllVisible(config);
+        }, EDIT_DEBOUNCE);
+      }
+    })
+  );
+
   // --- Configuration changed ---
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((event) => {

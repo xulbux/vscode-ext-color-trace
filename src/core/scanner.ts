@@ -6,6 +6,7 @@
  */
 
 import * as vscode from 'vscode';
+import { resolveDocumentConfig } from '@/config';
 import { getProviderColors } from '@/providers/documentColorBridge';
 import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
 import { extractColors, hasOverlap } from './colorParser';
@@ -85,7 +86,21 @@ function mergeMatches(
   return results;
 }
 
-import { resolveDocumentConfig } from '@/config';
+/**
+ * Check if the given range overlaps with any error or warning diagnostics.
+ */
+function hasDiagnosticOverlap(range: vscode.Range, diagnostics: vscode.Diagnostic[]): boolean {
+  for (const diag of diagnostics) {
+    if (
+      (diag.severity === vscode.DiagnosticSeverity.Error ||
+        diag.severity === vscode.DiagnosticSeverity.Warning) &&
+      diag.range.intersection(range)
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
 
 // -------------------------------------- PUBLIC API -------------------------------------
 
@@ -131,6 +146,7 @@ export async function scanEditor(
   // [2] Regex-based extraction.
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
+  const diagnostics = vscode.languages.getDiagnostics(doc.uri);
 
   // [2.5] Immediately apply fast regex matches for zero-latency feedback.
   const fastResults: { range: vscode.Range; color: ColorData }[] = [];
@@ -139,7 +155,7 @@ export async function scanEditor(
       doc.positionAt(match.startOffset),
       doc.positionAt(match.endOffset)
     );
-    if (scanRange.contains(range)) {
+    if (scanRange.contains(range) && !hasDiagnosticOverlap(range, diagnostics)) {
       fastResults.push({ color: match.color, range });
     }
   }
@@ -164,11 +180,14 @@ export async function scanEditor(
         scanRange,
       });
 
+      // Filter merged results against diagnostics as well.
+      const filteredMerged = merged.filter((m) => !hasDiagnosticOverlap(m.range, diagnostics));
+
       // [5] Cache full results.
-      cache.set(uri, { results: merged, version });
+      cache.set(uri, { results: filteredMerged, version });
 
       // [6] Apply updated decorations.
-      applyDecorations(editor, merged, docConfig);
+      applyDecorations(editor, filteredMerged, docConfig);
     })
     .catch(() => {
       // Ignore provider errors.
