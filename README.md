@@ -1,6 +1,6 @@
 <span id="top" />
 
-# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="36" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" height="34" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
 ### Highly performant, ultra-lightweight color marking extension for the editor.
 
