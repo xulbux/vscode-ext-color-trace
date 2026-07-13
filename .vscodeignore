@@ -2,16 +2,16 @@
 
 .github/
 .vscode/
-assets/preview/
+assets/
 node_modules/
 src/
 test/
 
+!assets/icon.png
 .eslintignore
 .gitignore
 .oxfmtrc.json
 .oxlintrc.json
-assets/icon.svg
 esbuild.js
 pnpm-lock.yaml
 pnpm-workspace.yaml

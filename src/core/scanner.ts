@@ -8,7 +8,13 @@
 import * as vscode from 'vscode';
 import { resolveDocumentConfig } from '@/config';
 import { getProviderColors } from '@/providers/documentColorBridge';
-import type { CacheEntry, ColorData, ColorMatch, ExtensionConfig } from '@/types';
+import type {
+  CacheEntry,
+  ColorData,
+  ColorMatch,
+  ExtensionConfig,
+  DocumentResolvedConfig,
+} from '@/types';
 import { mergeNonOverlapping } from '@/utils/ranges';
 import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
@@ -28,8 +34,9 @@ const cache = new Map<string, CacheEntry>();
 function mergeMatches(
   regexMatches: ColorMatch[],
   providerMatches: ColorMatch[],
-  doc: vscode.TextDocument
+  context: { doc: vscode.TextDocument; config: DocumentResolvedConfig }
 ): { range: vscode.Range; color: ColorData }[] {
+  const { doc, config } = context;
   // Provider matches from VS Code might not be strictly sorted. Sort them.
   providerMatches.sort((a, b) => a.startOffset - b.startOffset);
 
@@ -38,10 +45,11 @@ function mergeMatches(
   // Convert to VS Code ranges.
   const results: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of merged) {
-    const range = new vscode.Range(
-      doc.positionAt(match.startOffset),
-      doc.positionAt(match.endOffset)
-    );
+    const startOffset =
+      config.markerType === 'dot-before' && match.fullStartOffset !== undefined
+        ? match.fullStartOffset
+        : match.startOffset;
+    const range = new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
     results.push({ color: match.color, range });
   }
 
@@ -137,10 +145,11 @@ export async function scanEditor(
   // [2.5] Immediately apply fast regex matches for zero-latency feedback.
   const fastResults: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of regexMatches) {
-    const range = new vscode.Range(
-      doc.positionAt(match.startOffset),
-      doc.positionAt(match.endOffset)
-    );
+    const startOffset =
+      docConfig.markerType === 'dot-before' && match.fullStartOffset !== undefined
+        ? match.fullStartOffset
+        : match.startOffset;
+    const range = new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
     if (!hasDiagnosticOverlap(range, diagnostics)) {
       fastResults.push({ color: match.color, range });
     }
@@ -160,7 +169,7 @@ export async function scanEditor(
       }
 
       // [4] Merge & deduplicate.
-      const merged = mergeMatches(regexMatches, providerMatches, doc);
+      const merged = mergeMatches(regexMatches, providerMatches, { config: docConfig, doc });
 
       // Filter merged results against diagnostics as well.
       const filteredMerged = merged.filter((m) => !hasDiagnosticOverlap(m.range, diagnostics));

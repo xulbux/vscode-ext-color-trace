@@ -1,7 +1,7 @@
 <!-- Vue test fixture for Color Tracr -->
 
 <template>
-  <div class="vue-test-component text-slate-800 dark:text-slate-200">
+  <div class="vue-test-component text-slate-900 dark:text-slate-200">
     <!-- Template testing: string attributes and Tailwind classes -->
     <h2 class="text-2xl text-brand-blue mb-4">Vue Component Test</h2>
 

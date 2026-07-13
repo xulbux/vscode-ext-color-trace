@@ -8,7 +8,7 @@ export interface RGBA {
 
 /** Represents a parsed color with both its native CSS string and an RGBA fallback. */
 export interface ColorData {
-  /** The native CSS string used to style the marker (e.g. `oklch(60% 0.1 250)`). */
+  /** The native CSS string used to style the marker (e.g. `oklch(80% 0.25 250)`). */
   css: string;
   /** RGBA approximation used to calculate text foreground contrast. */
   rgba: RGBA;
@@ -38,6 +38,8 @@ export interface ColorMatch {
   endOffset: number;
   /** The resolved ColorData object containing native CSS string and RGBA fallback. */
   color: ColorData;
-  /** The original matched text (e.g. `#ff0000`, `rgb(255,0,0)`, `red`, …). */
+  /** The original matched text (e.g. `#F00`, `rgb(255,0,0)`, `red`, …). */
   originalText: string;
+  /** Optional start offset of the entire class/declaration (useful for dot-before styles). */
+  fullStartOffset?: number;
 }

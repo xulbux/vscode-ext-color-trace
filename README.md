@@ -55,7 +55,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
     </tr>
     <tr>
       <td align="left"><strong>Tailwind CSS</strong></td>
-      <td align="left">Classes like <code>bg-red-500</code>, <code>text-blue-200/50</code>, <code>border-slate-900</code>, …</td>
+      <td align="left">Classes like <code>text-slate-900</code>, <code>border-white/20</code>, <code>bg-rose-500</code>, …</td>
     </tr>
     <tr>
       <td align="left"><strong>Variable Tracing</strong></td>
@@ -73,11 +73,18 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 
 ### CSS
 
-<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-dark.png?raw=true" alt="CSS | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-light.png?raw=true" alt="CSS | Color Markers"></a>
 
 ### TypeScript
 
-<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-dark.png?raw=true" alt="TypeScript | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-light.png?raw=true" alt="TypeScript | Color Markers"></a>
+
+### React
+
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-dark.png?raw=true" alt="CSS | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-light.png?raw=true" alt="CSS | Color Markers"></a>
 
 <br>
 <br>

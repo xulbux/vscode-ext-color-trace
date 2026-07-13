@@ -5,10 +5,31 @@
  * Each match is converted to a `ColorData` object for downstream use.
  */
 
-import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/providers/namedColors';
+import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/consts/namedColors';
+import { TAILWIND_DEFAULTS } from '@/consts/tailwindColors';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractWithStrategies, strategies } from './strategies';
 import { getVariable, setVariable } from './variableManager';
+
+const tailwindDefaultCache = new Map<string, ColorData>();
+function getTailwindDefault(
+  colorName: string,
+  options?: DocumentResolvedConfig
+): ColorData | undefined {
+  let colorData = tailwindDefaultCache.get(colorName);
+  if (colorData) {
+    return colorData;
+  }
+
+  const hex = TAILWIND_DEFAULTS.get(colorName);
+  if (hex && options) {
+    colorData = extractWithStrategies(hex, options);
+    if (colorData) {
+      tailwindDefaultCache.set(colorName, colorData);
+    }
+  }
+  return colorData;
+}
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
@@ -111,7 +132,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           const innerColor = colorName.slice(1, -1);
           colorData = extractWithStrategies(innerColor, options);
         } else {
-          colorData = getVariable(`--color-${colorName}`);
+          colorData = getVariable(`--color-${colorName}`) || getTailwindDefault(colorName, options);
         }
 
         if (colorData) {
@@ -142,6 +163,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           results.push({
             color: colorData,
             endOffset: end,
+            fullStartOffset: classMatch.index,
             originalText: colorName + (alpha || ''),
             startOffset: offset,
           });

@@ -95,8 +95,8 @@ function createEntry(fingerprint: string): DecorationEntry {
     const dot = {
       backgroundColor: bg,
       contentText: '',
-      margin: type === 'dot-before' ? '0 0.25em 0 0.1em' : '0 0.1em 0 0.25em',
-      textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.9em; height: 0.9em; vertical-align: middle; transform: translateY(-8%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
+      margin: '0 0.25em',
+      textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.95em; height: 0.95em; vertical-align: middle; transform: translateY(-9%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
     };
     decoOptions = {
       ...(type === 'dot-before' ? { before: dot } : { after: dot }),

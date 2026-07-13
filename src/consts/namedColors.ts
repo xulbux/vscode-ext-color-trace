@@ -2,7 +2,7 @@
  * All 148 CSS named colors mapped to their `[R, G, B]` tuples,
  * plus `transparent` as a special-case entry (alpha handled by the parser).
  *
- * @see  https://www.w3.org/TR/css-color-4/#named-colors
+ * @see https://www.w3.org/TR/css-color-4/#named-colors
  */
 export const NAMED_COLORS: ReadonlyMap<string, [number, number, number]> = new Map<
   string,

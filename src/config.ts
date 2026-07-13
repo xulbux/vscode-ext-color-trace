@@ -16,7 +16,7 @@ function defaultBackgroundForThemeKind(): string {
   if (kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight) {
     return '#FFFFFF';
   }
-  return '#1E1E1E';
+  return '#121314';
 }
 
 /**

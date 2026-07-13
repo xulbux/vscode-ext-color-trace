@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import { NAMED_COLORS } from '@/providers/namedColors';
+import { NAMED_COLORS } from '@/consts/namedColors';
 import type { ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 

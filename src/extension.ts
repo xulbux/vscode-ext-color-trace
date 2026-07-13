@@ -10,7 +10,9 @@ import * as vscode from 'vscode';
 import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/config';
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, disposeAll } from '@/core/decorationManager';
+import { resolveSassImports } from '@/core/sassResolver';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
+import { loadTailwindConfigs } from '@/core/tailwindConfig';
 import {
   areVariablesEqual,
   clearVariablesForUri,
@@ -88,6 +90,17 @@ export function activate(context: vscode.ExtensionContext): void {
           // oxlint-disable-next-line no-await-in-loop
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
+
+        await resolveSassImports(
+          uris.filter(
+            (uri) =>
+              uri.fsPath.endsWith('.scss') ||
+              uri.fsPath.endsWith('.sass') ||
+              uri.fsPath.endsWith('.less')
+          ),
+          resolveDocumentConfig(config, 'scss')
+        );
+        await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
 
         clearCache();
         scanAllVisible(config);
