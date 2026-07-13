@@ -9,7 +9,7 @@
 import * as vscode from 'vscode';
 import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/config';
 import { extractColors } from '@/core/colorParser';
-import { clearDecorations, disposeAll } from '@/core/decorationManager';
+import { clearDecorations, cleanupEditors, disposeAll } from '@/core/decorationManager';
 import { resolveSassImports } from '@/core/sassResolver';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
 import { loadTailwindConfigs } from '@/core/tailwindConfig';
@@ -179,6 +179,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Visible editors changed (tabs opened/closed/split) ---
   context.subscriptions.push(
     vscode.window.onDidChangeVisibleTextEditors((editors) => {
+      cleanupEditors(editors);
       if (!config.enable) {
         return;
       }
@@ -192,6 +193,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
       invalidateCache(doc.uri.toString());
+      changedDocuments.delete(doc);
     })
   );
 

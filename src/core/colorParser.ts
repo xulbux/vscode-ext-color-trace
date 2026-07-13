@@ -240,6 +240,21 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
 
 // -------------------------------------- PUBLIC API -------------------------------------
 
+function isPossibleVariableDef(text: string, index: number): boolean {
+  let i = index - 1;
+  while (i >= 0 && i >= index - 100) {
+    const char = text[i];
+    if (char === ':') {
+      return true;
+    }
+    if (char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
+      return false;
+    }
+    i -= 1;
+  }
+  return false;
+}
+
 /**
  * Extract all color literals from `text`.
  *
@@ -306,10 +321,13 @@ export function extractColors(
     if (colorData) {
       // Check if this color is a variable definition:
       // `--var-name: <color>` or `$var-name: <color>` or `@var-name: <color>`
-      const prefix = text.slice(Math.max(0, match.index - 100), match.index);
-      const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-      if (defMatch?.groups && !isInsideComment(match.index)) {
-        setVariable(defMatch.groups.name, colorData, options.uri ?? '');
+
+      if (isPossibleVariableDef(text, match.index)) {
+        const prefix = text.slice(Math.max(0, match.index - 100), match.index);
+        const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
+        if (defMatch?.groups && !isInsideComment(match.index)) {
+          setVariable(defMatch.groups.name, colorData, options.uri ?? '');
+        }
       }
 
       results.push({

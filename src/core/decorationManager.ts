@@ -267,6 +267,25 @@ export function clearDecorations(editor: vscode.TextEditor): void {
 }
 
 /**
+ * Removes tracking for editors that are no longer visible.
+ */
+export function cleanupEditors(visibleEditors: readonly vscode.TextEditor[]): void {
+  const visibleIds = new Set(visibleEditors.map(editorKey));
+
+  for (const [editorId, keys] of editorStyleKeys.entries()) {
+    if (!visibleIds.has(editorId)) {
+      for (const key of keys) {
+        const entry = cache.get(key);
+        if (entry) {
+          entry.activeEditors.delete(editorId);
+        }
+      }
+      editorStyleKeys.delete(editorId);
+    }
+  }
+}
+
+/**
  * Dispose every cached decoration type; Call on extension deactivation.
  */
 export function disposeAll(): void {
