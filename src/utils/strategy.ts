@@ -11,10 +11,10 @@ export const PERCENT = String.raw`(?:\d+(?:\.\d+)?%|\.\d+%|none)`;
 export const ALPHA = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?|none)`;
 
 /** Negative lookbehind to ensure we don't start inside a number/word. */
-export const BOUNDARY_START = String.raw`(?<![a-zA-Z0-9_.%-])`;
+export const BOUNDARY_START = String.raw`(?<![a-z0-9_.%-])`;
 
 /** Negative lookahead to ensure we don't end inside a number/word/percent. */
-export const BOUNDARY_END = String.raw`(?![a-zA-Z0-9_.%-])`;
+export const BOUNDARY_END = String.raw`(?![a-z0-9_.%-])`;
 
 /** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`). */
 export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?|none)`;

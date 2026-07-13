@@ -59,9 +59,11 @@ export function resolveEditorBackground(): RGBA {
  * 3.  Auto-detect from the active color theme kind.
  */
 let cachedConfig: ExtensionConfig | undefined = undefined;
+let cachedEditorBackground: RGBA | undefined = undefined;
 
 export function invalidateConfigCache(): void {
   cachedConfig = undefined;
+  cachedEditorBackground = undefined;
 }
 
 export function readConfig(): ExtensionConfig {
@@ -72,7 +74,6 @@ export function readConfig(): ExtensionConfig {
   const cfg = vscode.workspace.getConfiguration('colorTracr');
 
   cachedConfig = {
-    editorBackground: resolveEditorBackground(),
     enable: cfg.get<string[]>('enable', ['*']),
     excludePaths: cfg.get<string[]>('excludePaths', [
       '**/node_modules/**',
@@ -109,8 +110,12 @@ export function resolveDocumentConfig(
   config: ExtensionConfig,
   languageId: string
 ): DocumentResolvedConfig {
+  if (!cachedEditorBackground) {
+    cachedEditorBackground = resolveEditorBackground();
+  }
+
   return {
-    editorBackground: config.editorBackground,
+    editorBackground: cachedEditorBackground,
     enable: isLanguageEnabled(languageId, config.enable),
     markNamedColors: config.markNamedColors,
     markTailwind: isLanguageEnabled(languageId, config.markTailwind),

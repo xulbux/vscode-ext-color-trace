@@ -8,7 +8,8 @@
 
 import * as vscode from 'vscode';
 import { NAMED_COLORS } from '@/consts/namedColors';
-import type { ColorMatch, DocumentResolvedConfig } from '@/types';
+import { hexStrategy } from '@/core/strategies/hex';
+import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 
 /**
@@ -88,21 +89,28 @@ export async function getProviderColors(
       }
 
       if (isValid) {
-        // VS Code's Color uses 0-1 for all channels.
-        const rgba = {
-          a: info.color.alpha,
-          b: Math.round(info.color.blue * 255),
-          g: Math.round(info.color.green * 255),
-          r: Math.round(info.color.red * 255),
-        };
+        let colorData: ColorData | undefined = undefined;
 
-        const opaqueCss = `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
-        matches.push({
-          color: { css: originalText, opaqueCss, rgba },
-          endOffset,
-          originalText,
-          startOffset,
-        });
+        // If `useARGB` is enabled, re-evaluate hex colors from providers because VS Code built-in
+        // providers always treat hex colors as RGBA, completely ignoring the user's ARGB preference.
+        if (options.useARGB && /^(?:#|0x)(?:[0-9A-F]{4}|[0-9A-F]{8})$/i.test(originalText.trim())) {
+          colorData = hexStrategy.extract(originalText, options);
+        }
+
+        if (!colorData) {
+          // VS Code's Color uses 0-1 for all channels.
+          const rgba = {
+            a: info.color.alpha,
+            b: Math.round(info.color.blue * 255),
+            g: Math.round(info.color.green * 255),
+            r: Math.round(info.color.red * 255),
+          };
+
+          const opaqueCss = `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
+          colorData = { css: originalText, opaqueCss, rgba };
+        }
+
+        matches.push({ color: colorData, endOffset, originalText, startOffset });
       }
     }
 

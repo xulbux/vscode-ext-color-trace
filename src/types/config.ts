@@ -9,8 +9,6 @@ export interface ExtensionConfig {
   excludePaths: string[];
 
   // Visual
-  /** The editor's background color. */
-  editorBackground: RGBA;
   /** The decoration style to apply to matching colors. */
   markerType: 'highlight' | 'dot-before' | 'dot-after';
   /** Whether to respect the alpha channel in color previews. */

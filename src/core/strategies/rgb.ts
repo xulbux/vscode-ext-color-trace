@@ -129,5 +129,5 @@ export const rgbStrategy: ColorParsingStrategy = {
     return patterns;
   },
   id: 'rgb',
-  pattern: String.raw`a?rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9a-fA-F]{3,8}\s*)\)`,
+  pattern: String.raw`a?rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9A-F]{3,8}\s*)\)`,
 };

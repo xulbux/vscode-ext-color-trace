@@ -68,7 +68,7 @@ export const hexStrategy: ColorParsingStrategy = {
    * Extracts hex color data from a matched string.
    */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    const match = /^(?:#|0x)(?<hexDigits>[0-9a-f]{3,8})$/i.exec(matchText.trim());
+    const match = /^(?:#|0x)(?<hexDigits>[0-9A-F]{3,8})$/i.exec(matchText.trim());
     if (!match) {
       return undefined;
     }
@@ -85,5 +85,5 @@ export const hexStrategy: ColorParsingStrategy = {
   },
   id: 'hex',
   /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x…` equivalents */
-  pattern: String.raw`(?:#|0x)(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})\b`,
+  pattern: String.raw`(?:#|0x)(?:[0-9A-F]{3,4}|[0-9A-F]{6}|[0-9A-F]{8})\b`,
 };
