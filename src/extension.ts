@@ -30,6 +30,8 @@ const EDIT_DEBOUNCE = 150;
 /** Delay before re-scanning to let other extensions' `DocumentColorProviders` load (ms). */
 const PROVIDER_WARMUP_DELAY = 2000;
 
+let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
+
 // -------------------------------------- ACTIVATION -------------------------------------
 
 function triggerScan(editor: vscode.TextEditor, config: ExtensionConfig): void {
@@ -106,7 +108,7 @@ export function activate(context: vscode.ExtensionContext): void {
         scanAllVisible(config);
       });
 
-    // [3] Re-scan after a short delay so DocumentColorProviders have time to initialize.
+    // [3] Re-scan after a short delay so `DocumentColorProviders` have time to initialize.
     setTimeout(() => {
       clearCache();
       scanAllVisible(config);
@@ -207,8 +209,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
-
   // --- Diagnostics changed (errors/warnings) ---
   context.subscriptions.push(
     vscode.languages.onDidChangeDiagnostics((event) => {
@@ -292,6 +292,9 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   if (updateTimer !== undefined) {
     clearTimeout(updateTimer);
+  }
+  if (diagTimer !== undefined) {
+    clearTimeout(diagTimer);
   }
   disposeAll();
   clearCache();

@@ -11,10 +11,10 @@ import {
 
 export const cmykStrategy: ColorParsingStrategy = {
   /**
-   * Extracts device-cmyk color data from a matched string.
+   * Extracts `device-cmyk` color data from a matched string.
    */
   extract(matchText: string): ColorData | undefined {
-    // device-cmyk does not allow commas natively in CSS Color 4.
+    // `device-cmyk` does not allow commas natively in CSS Color 4.
     const tokens = parseColorTokens(matchText, ['device-cmyk'], {
       allowCommas: false,
       maxChannelsBeforeSlash: 4,

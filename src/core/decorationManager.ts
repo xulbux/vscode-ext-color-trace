@@ -1,5 +1,5 @@
 /**
- * Manages the creation, caching, and disposal of TextEditorDecorationTypes.
+ * Manages the creation, caching, and disposal of `TextEditorDecorationTypes`.
  *
  * Each unique visual style (determined by `bg`, `fg`, `border`, and `radius`)
  * gets its own decoration type, cached via an LRU Map.
@@ -14,7 +14,7 @@ import { alphaBlend, relativeLuminance } from '@/utils/color';
 
 const LRU_CAPACITY = 4096;
 
-/** LRU cache: style fingerprint → DecorationEntry. */
+/** LRU cache: style fingerprint → `DecorationEntry`. */
 const cache = new Map<string, DecorationEntry>();
 
 /** Tracks which style keys are applied per editor to enable cleanup. */
@@ -35,7 +35,7 @@ function styleFingerprint(
   options: DocumentResolvedConfig,
   outlineCss: string
 ): string {
-  // Respect the showAlpha setting.
+  // Respect the `showAlpha` setting.
   const rgba = options.showAlpha ? color.rgba : { ...color.rgba, a: 1 };
 
   // If the marker is semi-transparent, blend it over the editor background first.
@@ -44,7 +44,7 @@ function styleFingerprint(
   const fg = lum > 0.179 ? '#000000' : '#FFFFFF';
 
   // Always use the native CSS string for the actual background decoration, unless we need to force opacity for the border.
-  // If showAlpha is false, use the pre-calculated opaqueCss instead of the native CSS string.
+  // If `showAlpha` is false, use the pre-calculated opaqueCss instead of the native CSS string.
   const bgCss = options.showAlpha ? color.css : color.opaqueCss;
   const isTransparent = rgba.a < 1;
 
@@ -58,6 +58,12 @@ function styleFingerprint(
   return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}|type:${options.markerType}`;
 }
 
+/**
+ * Creates a new `TextEditorDecorationType` from a given fingerprint string.
+ *
+ * @param fingerprint   The style fingerprint.
+ * @returns The created `DecorationEntry`.
+ */
 function createEntry(fingerprint: string): DecorationEntry {
   let bg = 'transparent',
     fg = '#FFFFFF',
@@ -123,6 +129,9 @@ function createEntry(fingerprint: string): DecorationEntry {
 
 /**
  * Add an entry to the LRU cache, evicting the oldest if at capacity.
+ *
+ * @param key     The style fingerprint string used as cache key.
+ * @param entry   The decoration entry to cache.
  */
 function addToCache(key: string, entry: DecorationEntry): void {
   if (cache.size >= LRU_CAPACITY) {
@@ -142,6 +151,9 @@ function addToCache(key: string, entry: DecorationEntry): void {
 
 /**
  * Stable identifier for an editor instance.
+ *
+ * @param editor   The VS Code text editor instance.
+ * @returns A string uniquely identifying the editor.
  */
 function editorKey(editor: vscode.TextEditor): string {
   return `${editor.document.uri.toString()}:${editor.viewColumn ?? 0}`;
@@ -153,7 +165,7 @@ function editorKey(editor: vscode.TextEditor): string {
  * Apply color decorations to a single editor.
  *
  * Groups the supplied color matches by computed visual style, creates or reuses
- * cached TextEditorDecorationTypes, and applies them in one batch per unique style.
+ * cached `TextEditorDecorationTypes`, and applies them in one batch per unique style.
  *
  * @param editor    The editor to decorate.
  * @param matches   Color matches with resolved RGBA and document ranges.

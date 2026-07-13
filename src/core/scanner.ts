@@ -1,7 +1,7 @@
 /**
  * Scanner – Orchestrates color detection for a single editor.
  *
- * Combines regex-based parsing with the DocumentColorProvider bridge,
+ * Combines regex-based parsing with the `DocumentColorProvider` bridge,
  * deduplicates overlapping results, and hands off to the decoration manager.
  */
 
@@ -59,13 +59,12 @@ function mergeMatches(
 /**
  * Check if the given range overlaps with any error or warning diagnostics.
  */
-function hasDiagnosticOverlap(range: vscode.Range, diagnostics: vscode.Diagnostic[]): boolean {
-  for (const diag of diagnostics) {
-    if (
-      (diag.severity === vscode.DiagnosticSeverity.Error ||
-        diag.severity === vscode.DiagnosticSeverity.Warning) &&
-      diag.range.intersection(range)
-    ) {
+function hasDiagnosticOverlap(
+  range: vscode.Range,
+  activeDiagnostics: vscode.Diagnostic[]
+): boolean {
+  for (const diag of activeDiagnostics) {
+    if (diag.range.intersection(range)) {
       return true;
     }
   }
@@ -129,7 +128,12 @@ export async function scanEditor(
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
   const afterVars = getVariablesForUri(uri);
-  const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+  const allDiagnostics = vscode.languages.getDiagnostics(doc.uri);
+  const activeDiagnostics = allDiagnostics.filter(
+    (diagnostic) =>
+      diagnostic.severity === vscode.DiagnosticSeverity.Error ||
+      diagnostic.severity === vscode.DiagnosticSeverity.Warning
+  );
 
   if (!areVariablesEqual(beforeVars, afterVars)) {
     for (const visibleEditor of vscode.window.visibleTextEditors) {
@@ -150,7 +154,7 @@ export async function scanEditor(
         ? match.fullStartOffset
         : match.startOffset;
     const range = new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
-    if (!hasDiagnosticOverlap(range, diagnostics)) {
+    if (!hasDiagnosticOverlap(range, activeDiagnostics)) {
       fastResults.push({ color: match.color, range });
     }
   }
@@ -159,7 +163,7 @@ export async function scanEditor(
   cache.set(uri, { results: fastResults, version });
   applyDecorations(editor, fastResults, docConfig);
 
-  // [3] DocumentColorProvider bridge (async, non-blocking).
+  // [3] `DocumentColorProvider` bridge (async, non-blocking).
   // We do not await this so the initial regex colors render instantly.
   getProviderColors(doc, docConfig)
     .then((providerMatches) => {
@@ -171,8 +175,9 @@ export async function scanEditor(
       // [4] Merge & deduplicate.
       const merged = mergeMatches(regexMatches, providerMatches, { config: docConfig, doc });
 
-      // Filter merged results against diagnostics as well.
-      const filteredMerged = merged.filter((m) => !hasDiagnosticOverlap(m.range, diagnostics));
+      const filteredMerged = merged.filter(
+        (m) => !hasDiagnosticOverlap(m.range, activeDiagnostics)
+      );
 
       // [5] Cache full results.
       cache.set(uri, { results: filteredMerged, version });

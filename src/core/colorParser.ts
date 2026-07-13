@@ -232,11 +232,13 @@ export function extractColors(
     if (!commentRanges) {
       commentRanges = [];
       for (const match of text.matchAll(
-        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm
+        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--(?:[^-]|-(?!->))*-->|\/\/.*$/gm
       )) {
-        commentRanges.push({ end: match.index + match[0].length, start: match.index });
+        if (!(match[0].startsWith('//') && match.index > 0 && text[match.index - 1] === ':')) {
+          commentRanges.push({ end: match.index + match[0].length, start: match.index });
+        }
       }
-      commentRanges.sort((a, b) => a.start - b.start);
+      // `matchAll` returns matches sorted by start index automatically.
     }
 
     let left = 0;
@@ -258,7 +260,6 @@ export function extractColors(
   const colorRe = getRegex(options);
 
   // [1] Functional and hexa colors (all languages).
-  const pass1: ColorMatch[] = [];
   for (const match of text.matchAll(colorRe)) {
     let colorData: ColorData | undefined = undefined;
     const { groups } = match;
@@ -283,7 +284,7 @@ export function extractColors(
         setVariable(defMatch.groups.name, colorData, options.uri ?? '');
       }
 
-      pass1.push({
+      results.push({
         color: colorData,
         endOffset: match.index + match[0].length,
         originalText: match[0],
@@ -291,7 +292,6 @@ export function extractColors(
       });
     }
   }
-  results = pass1;
 
   if (options.extractOnly) {
     return results;

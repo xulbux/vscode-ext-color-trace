@@ -5,7 +5,7 @@ import { formatHexCss } from '@/utils/color';
  * Parses a hex string into an RGBA object.
  * @param digits    The raw hex digits.
  * @param useARGB   If true, 8-digit hex strings are interpreted as ARGB instead of RGBA.
- * @returns The parsed RGBA object, or undefined if invalid.
+ * @returns The parsed RGBA object, or `undefined` if invalid.
  */
 export function parseHex(
   digits: string,
@@ -81,17 +81,7 @@ export const hexStrategy: ColorParsingStrategy = {
 
     const { cssStr, opaqueCss } = formatHexCss(digits, options?.useARGB);
 
-    // For hex colors, the native CSS representation is usually best kept as the hex string.
-    // Except if it's 0x… we convert to #… so CSS understands it.
-    let finalCssStr = cssStr;
-    if (matchText.trim().toLowerCase().startsWith('0x')) {
-      finalCssStr = cssStr; // formatHexCss already converted digits to #…
-    } else {
-      // Preserve the original prefix (#) if needed, formatHexCss does # by default.
-      // Actually formatHexCss returns `#digits` which is correct for `#…` inputs too.
-    }
-
-    return { css: finalCssStr, opaqueCss, rgba };
+    return { css: cssStr, opaqueCss, rgba };
   },
   id: 'hex',
   /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x…` equivalents */

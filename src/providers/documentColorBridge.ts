@@ -1,7 +1,7 @@
 /**
  * Bridge to VS Code's built-in `vscode.executeDocumentColorProvider` command.
  *
- * This aggregates color information from ALL registered DocumentColorProviders,
+ * This aggregates color information from ALL registered `DocumentColorProviders`,
  * including the built-in CSS language service (which resolves `var()` references)
  * and Tailwind CSS IntelliSense (if installed).
  */
@@ -12,7 +12,7 @@ import type { ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 
 /**
- * Query all registered DocumentColorProviders for the given document.
+ * Query all registered `DocumentColorProviders` for the given document.
  *
  * @returns `ColorMatch[]` derived from other extensions' color providers.
  *          Returns an empty array if no providers are available.

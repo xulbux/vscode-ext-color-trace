@@ -25,50 +25,55 @@ export function hasOverlap(sortedMatches: ColorMatch[], start: number, end: numb
   return false;
 }
 
-/**
- * Filter out any `newMatches` that overlap with `target` matches (prioritizing `target` matches),
- * optionally remove overlaps within the filtered `newMatches` themselves,
- * and merge both arrays into a single sorted array.
- * Both `target` and `newMatches` are expected to be sorted by `startOffset`.
- */
 export function mergeNonOverlapping(
   target: ColorMatch[],
   newMatches: ColorMatch[],
   removeIntraOverlaps = false
 ): ColorMatch[] {
-  let filtered = newMatches.filter((m) => !hasOverlap(target, m.startOffset, m.endOffset));
-
-  if (removeIntraOverlaps) {
-    const deduped: ColorMatch[] = [];
-    let lastEnd = -1;
-    for (const pm of filtered) {
-      if (pm.startOffset >= lastEnd) {
-        deduped.push(pm);
-        lastEnd = pm.endOffset;
-      }
-    }
-    filtered = deduped;
-  }
-
   const merged: ColorMatch[] = [];
   let i = 0;
   let j = 0;
-  while (i < target.length && j < filtered.length) {
-    if (target[i].startOffset <= filtered[j].startOffset) {
+  let lastEnd = -1;
+
+  while (i < target.length && j < newMatches.length) {
+    if (target[i].startOffset <= newMatches[j].startOffset) {
       merged.push(target[i]);
+      if (removeIntraOverlaps) {
+        lastEnd = Math.max(lastEnd, target[i].endOffset);
+      }
       i += 1;
     } else {
-      merged.push(filtered[j]);
+      const pm = newMatches[j];
+      const overlapsIntra = removeIntraOverlaps && pm.startOffset < lastEnd;
+      if (!overlapsIntra && !hasOverlap(target, pm.startOffset, pm.endOffset)) {
+        merged.push(pm);
+        if (removeIntraOverlaps) {
+          lastEnd = Math.max(lastEnd, pm.endOffset);
+        }
+      }
       j += 1;
     }
   }
+
   while (i < target.length) {
     merged.push(target[i]);
+    if (removeIntraOverlaps) {
+      lastEnd = Math.max(lastEnd, target[i].endOffset);
+    }
     i += 1;
   }
-  while (j < filtered.length) {
-    merged.push(filtered[j]);
+
+  while (j < newMatches.length) {
+    const pm = newMatches[j];
+    const overlapsIntra = removeIntraOverlaps && pm.startOffset < lastEnd;
+    if (!overlapsIntra && !hasOverlap(target, pm.startOffset, pm.endOffset)) {
+      merged.push(pm);
+      if (removeIntraOverlaps) {
+        lastEnd = Math.max(lastEnd, pm.endOffset);
+      }
+    }
     j += 1;
   }
+
   return merged;
 }

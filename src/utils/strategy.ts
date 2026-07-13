@@ -46,9 +46,6 @@ export function parseAlpha(token: string | undefined): number {
   if (token === undefined) {
     return 1;
   }
-  if (token === 'none') {
-    return 0;
-  }
   return parsePercent(token);
 }
 
@@ -70,7 +67,7 @@ export function parseHue(token: string): number {
   if (token.endsWith('turn')) {
     return value * 360;
   }
-  return value; // bare number = degrees
+  return value; // Bare number = degrees.
 }
 
 /** Extract tokens from inside parentheses and validate CSS punctuation rules. */
@@ -122,8 +119,8 @@ export function extractTokens(
 
 /**
  * Boilerplate helper for color strategies.
- * Checks if the matchText starts with any of the valid prefixes.
- * Returns the parsed tokens if valid, otherwise undefined.
+ * Checks if the `matchText` starts with any of the valid prefixes.
+ * Returns the parsed tokens if valid, otherwise `undefined`.
  */
 export function parseColorTokens(
   matchText: string,
@@ -154,7 +151,7 @@ export function clampAlpha(value: number): number {
 
 /**
  * Remove alpha channel specifications from a native CSS string.
- * @param cssStr   The CSS string (e.g. `hwb(120 50% 50% / 0.5)`).
+ * @param cssStr   The CSS string (e.g., `hwb(120 50% 50% / 0.5)`).
  * @returns The opaque CSS string without the alpha.
  */
 export function removeCssAlpha(cssStr: string): string {

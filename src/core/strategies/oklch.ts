@@ -15,7 +15,7 @@ function parseL(token: string): number {
   if (token.endsWith('%')) {
     return Number.parseFloat(token) / 100;
   }
-  // For lab/oklab, could be 0-1 or 0-100, we normalize roughly to 0-1 for our fake rgb.
+  // For LAB/OKLAB, could be 0-1 or 0-100, we normalize roughly to 0-1 for our fake RGB.
   return Number.parseFloat(token);
 }
 
@@ -35,9 +35,10 @@ export const oklchStrategy: ColorParsingStrategy = {
    * Extracts OKLCH/LCH/OKLAB/LAB color data from a matched string.
    */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
+    let tokens: string[] | undefined = undefined;
     const lower = matchText.trim().toLowerCase();
+    let isRawMatch = false;
 
-    // Check for raw matching
     if (
       !lower.startsWith('oklch') &&
       !lower.startsWith('lch') &&
@@ -48,40 +49,39 @@ export const oklchStrategy: ColorParsingStrategy = {
         return undefined;
       }
 
-      const tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+      tokens = matchText.split(/[\s,/]+/).filter(Boolean);
       if (tokens.length < 3) {
         return undefined;
       }
-
-      const l = parseL(tokens[0]);
-      const { r, g, b } = approximateRgbFromL(l);
-      const a = clampAlpha(parseAlpha(tokens[3]));
-
-      const isOklch = options.matchOklchWithNoFunction;
-      const func = isOklch ? 'oklch' : 'lch';
-
-      const tokensJoined = tokens.slice(0, 3).join(' ');
-      const alphaStr = tokens[3] ? ` / ${tokens[3]}` : '';
-      const cssStr = `${func}(${tokensJoined}${alphaStr})`.replace('°', 'deg');
-      const opaqueCss = `${func}(${tokensJoined})`.replace('°', 'deg');
-
-      return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
-    }
-
-    const tokens = parseColorTokens(matchText, ['oklch', 'lch', 'oklab', 'lab'], {
-      allowCommas: false,
-      minTokens: 3,
-    });
-    if (!tokens) {
-      return undefined;
+      isRawMatch = true;
+    } else {
+      tokens = parseColorTokens(matchText, ['oklch', 'lch', 'oklab', 'lab'], {
+        allowCommas: false,
+        minTokens: 3,
+      });
+      if (!tokens) {
+        return undefined;
+      }
     }
 
     const l = parseL(tokens[0]);
     const { r, g, b } = approximateRgbFromL(l);
     const a = clampAlpha(parseAlpha(tokens[3]));
 
-    const cssStr = matchText.replace('°', 'deg');
-    const opaqueCss = removeCssAlpha(cssStr);
+    let cssStr = '';
+    let opaqueCss = '';
+
+    if (isRawMatch) {
+      const isOklch = options?.matchOklchWithNoFunction;
+      const func = isOklch ? 'oklch' : 'lch';
+      const tokensJoined = tokens.slice(0, 3).join(' ');
+      const alphaStr = tokens[3] ? ` / ${tokens[3]}` : '';
+      cssStr = `${func}(${tokensJoined}${alphaStr})`.replace('°', 'deg');
+      opaqueCss = `${func}(${tokensJoined})`.replace('°', 'deg');
+    } else {
+      cssStr = matchText.replace('°', 'deg');
+      opaqueCss = removeCssAlpha(cssStr);
+    }
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };
   },

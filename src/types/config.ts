@@ -23,7 +23,7 @@ export interface ExtensionConfig {
   markVariables: string[];
   /** Array of language IDs to enable Tailwind CSS class marking. */
   markTailwind: string[];
-  /** Array of language IDs to match raw RGB numbers (e.g. `255, 0, 0`). */
+  /** Array of language IDs to match raw RGB numbers (e.g., `255, 0, 0`). */
   matchRgbWithNoFunction: string[];
   /** Array of language IDs to match raw HSL numbers. */
   matchHslWithNoFunction: string[];
@@ -67,7 +67,7 @@ export interface DocumentResolvedConfig {
   matchLchWithNoFunction: boolean;
   /** True if raw OKLCH numbers should be matched. */
   matchOklchWithNoFunction: boolean;
-  /** True if 8-digit hexes should be parsed as ARGB instead of RGBA. */
+  /** True if 4- and 8-digit hexes should be parsed as ARGB instead of RGBA. */
   useARGB: boolean;
   /** If true, the parser only extracts regex-based colors to find variable definitions, skipping secondary passes like tailwind and variables usages. */
   extractOnly?: boolean;

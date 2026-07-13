@@ -8,7 +8,7 @@ import type { ColorData } from '@/types';
 
 /**
  * Global store of CSS variables extracted from the workspace.
- * This allows resolving `var(--name)` and Tailwind classes (e.g. `text-red`)
+ * This allows resolving `var(--name)` and Tailwind classes (e.g., `text-red`)
  * even across different files, as long as the definition file was opened.
  */
 const globalVariables = new Map<string, { color: ColorData; uri: string }>();
