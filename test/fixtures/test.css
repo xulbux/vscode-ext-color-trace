@@ -100,10 +100,6 @@
   background: var(--color-brand-red, red);
 }
 
-.text-blue-500 {
-  color: #709bff;
-}
-
 .brand-green-light {
   color: #40db80;
 }
@@ -113,5 +109,5 @@
 
 .card-shadow {
   @apply shadow-lg border-gray-200;
-  @apply text-blue-700 bg-white;
+  @apply text-indigo-700 bg-white;
 }

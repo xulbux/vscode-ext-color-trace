@@ -23,7 +23,7 @@ export const strategies: ColorParsingStrategy[] = [
 
 /**
  * Iterates through all available strategies to extract color data from a string.
- * Used as a fallback when the specific strategy is unknown (e.g. Tailwind arbitrary values).
+ * Used as a fallback when the specific strategy is unknown (e.g., Tailwind arbitrary values).
  */
 export function extractWithStrategies(
   matchText: string,

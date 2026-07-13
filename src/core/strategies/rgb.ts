@@ -63,7 +63,7 @@ export const rgbStrategy: ColorParsingStrategy = {
     }
 
     if (tokens.length === 1) {
-      // Hyprland-style `rgb(HEX)` or `rgba(HEXA)`.
+      // Hyprland-style `rgb(HEX)`
       const [hexStr] = tokens;
       const hexLen = hexStr.length;
       if (hexLen === 3 || hexLen === 4 || hexLen === 6 || hexLen === 8) {
@@ -85,7 +85,7 @@ export const rgbStrategy: ColorParsingStrategy = {
     }
 
     if (lower.startsWith('argb')) {
-      // argb(A, R, G, B) where A is usually 0-255 or 0-1
+      // `argb(A, R, G, B)` where A is usually 0-255 or 0-1
       const alphaVal = parseChannel(tokens[0]);
       a = clampAlpha(
         tokens[0].includes('%') || alphaVal <= 1 ? parseAlpha(tokens[0]) : alphaVal / 255
@@ -129,5 +129,5 @@ export const rgbStrategy: ColorParsingStrategy = {
     return patterns;
   },
   id: 'rgb',
-  pattern: String.raw`a?rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9a-fA-F]{3,8}\s*)\)`,
+  pattern: String.raw`a?rgba?\((?:\s*${NUM}\s*[, \t]\s*${NUM}\s*[, \t]\s*${NUM}(?:\s*[,/]\s*${ALPHA})?\s*|\s*[0-9A-F]{3,8}\s*)\)`,
 };

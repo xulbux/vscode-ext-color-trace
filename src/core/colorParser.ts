@@ -5,10 +5,40 @@
  * Each match is converted to a `ColorData` object for downstream use.
  */
 
-import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/providers/namedColors';
+import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/consts/namedColors';
+import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
+import { TAILWIND_DEFAULTS } from '@/consts/tailwindColors';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractWithStrategies, strategies } from './strategies';
 import { getVariable, setVariable } from './variableManager';
+
+const tailwindDefaultCache = new Map<string, ColorData>();
+function getTailwindDefault(
+  colorName: string,
+  options?: DocumentResolvedConfig
+): ColorData | undefined {
+  let colorData = tailwindDefaultCache.get(colorName);
+  if (colorData) {
+    return colorData;
+  }
+
+  const hex = TAILWIND_DEFAULTS.get(colorName);
+  if (hex === SPECIAL_TRANSPARENT) {
+    colorData = {
+      css: 'transparent',
+      opaqueCss: 'transparent',
+      rgba: { a: 0, b: 0, g: 0, r: 0 },
+      special: SPECIAL_TRANSPARENT,
+    };
+    tailwindDefaultCache.set(colorName, colorData);
+  } else if (hex && options) {
+    colorData = extractWithStrategies(hex as string, options);
+    if (colorData) {
+      tailwindDefaultCache.set(colorName, colorData);
+    }
+  }
+  return colorData;
+}
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
@@ -56,7 +86,7 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 
 // -------------------------------------- EXTRACTORS -------------------------------------
 
-function extractVariableUsages(text: string): ColorMatch[] {
+function extractVariableUsages(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
   if (!text.includes('var(') && !text.includes('$') && !text.includes('@')) {
     return [];
   }
@@ -64,7 +94,12 @@ function extractVariableUsages(text: string): ColorMatch[] {
   for (const varMatch of text.matchAll(VAR_USE_RE)) {
     const varName = varMatch.groups?.name1 || varMatch.groups?.name2;
     if (varName) {
-      const colorData = getVariable(varName);
+      let colorData = getVariable(varName);
+
+      if (!colorData && varName.startsWith('--color-')) {
+        colorData = getTailwindDefault(varName.slice(8), options);
+      }
+
       if (colorData) {
         const offset = varMatch.index + varMatch[0].indexOf(varName);
         const end = offset + varName.length;
@@ -111,7 +146,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           const innerColor = colorName.slice(1, -1);
           colorData = extractWithStrategies(innerColor, options);
         } else {
-          colorData = getVariable(`--color-${colorName}`);
+          colorData = getVariable(`--color-${colorName}`) || getTailwindDefault(colorName, options);
         }
 
         if (colorData) {
@@ -142,6 +177,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           results.push({
             color: colorData,
             endOffset: end,
+            fullStartOffset: classMatch.index,
             originalText: colorName + (alpha || ''),
             startOffset: offset,
           });
@@ -172,16 +208,30 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
       const isClassFragment = isAdjacentToHyphen(text, offset, end);
 
       if (!isClassFragment) {
-        results.push({
-          color: {
-            css: wordMatch[0],
-            opaqueCss: word === 'transparent' ? '#000000' : wordMatch[0],
-            rgba: { a: word === 'transparent' ? 0 : 1, b: rgb[2], g: rgb[1], r: rgb[0] },
-          },
-          endOffset: end,
-          originalText: wordMatch[0],
-          startOffset: offset,
-        });
+        if (rgb === SPECIAL_TRANSPARENT) {
+          results.push({
+            color: {
+              css: 'transparent',
+              opaqueCss: 'transparent',
+              rgba: { a: 0, b: 0, g: 0, r: 0 },
+              special: SPECIAL_TRANSPARENT,
+            },
+            endOffset: end,
+            originalText: wordMatch[0],
+            startOffset: offset,
+          });
+        } else {
+          results.push({
+            color: {
+              css: wordMatch[0],
+              opaqueCss: wordMatch[0],
+              rgba: { a: 1, b: rgb[2], g: rgb[1], r: rgb[0] },
+            },
+            endOffset: end,
+            originalText: wordMatch[0],
+            startOffset: offset,
+          });
+        }
       }
     }
   }
@@ -189,6 +239,21 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
 }
 
 // -------------------------------------- PUBLIC API -------------------------------------
+
+function isPossibleVariableDef(text: string, index: number): boolean {
+  let i = index - 1;
+  while (i >= 0 && i >= index - 100) {
+    const char = text[i];
+    if (char === ':') {
+      return true;
+    }
+    if (char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
+      return false;
+    }
+    i -= 1;
+  }
+  return false;
+}
 
 /**
  * Extract all color literals from `text`.
@@ -210,11 +275,13 @@ export function extractColors(
     if (!commentRanges) {
       commentRanges = [];
       for (const match of text.matchAll(
-        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--[\s\S]*?-->|(?<!:)\/\/.*$/gm
+        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--(?:[^-]|-(?!->))*-->|\/\/.*$/gm
       )) {
-        commentRanges.push({ end: match.index + match[0].length, start: match.index });
+        if (!(match[0].startsWith('//') && match.index > 0 && text[match.index - 1] === ':')) {
+          commentRanges.push({ end: match.index + match[0].length, start: match.index });
+        }
       }
-      commentRanges.sort((a, b) => a.start - b.start);
+      // `matchAll` returns matches sorted by start index automatically.
     }
 
     let left = 0;
@@ -236,7 +303,6 @@ export function extractColors(
   const colorRe = getRegex(options);
 
   // [1] Functional and hexa colors (all languages).
-  const pass1: ColorMatch[] = [];
   for (const match of text.matchAll(colorRe)) {
     let colorData: ColorData | undefined = undefined;
     const { groups } = match;
@@ -255,13 +321,16 @@ export function extractColors(
     if (colorData) {
       // Check if this color is a variable definition:
       // `--var-name: <color>` or `$var-name: <color>` or `@var-name: <color>`
-      const prefix = text.slice(Math.max(0, match.index - 100), match.index);
-      const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-      if (defMatch?.groups && !isInsideComment(match.index)) {
-        setVariable(defMatch.groups.name, colorData, options.uri ?? '');
+
+      if (isPossibleVariableDef(text, match.index)) {
+        const prefix = text.slice(Math.max(0, match.index - 100), match.index);
+        const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
+        if (defMatch?.groups && !isInsideComment(match.index)) {
+          setVariable(defMatch.groups.name, colorData, options.uri ?? '');
+        }
       }
 
-      pass1.push({
+      results.push({
         color: colorData,
         endOffset: match.index + match[0].length,
         originalText: match[0],
@@ -269,7 +338,6 @@ export function extractColors(
       });
     }
   }
-  results = pass1;
 
   if (options.extractOnly) {
     return results;
@@ -277,7 +345,7 @@ export function extractColors(
 
   // [2] CSS Variable Usages.
   if (options.markVariables) {
-    results = mergeNonOverlapping(results, extractVariableUsages(text));
+    results = mergeNonOverlapping(results, extractVariableUsages(text, options));
   }
 
   // [3] Tailwind Classes.

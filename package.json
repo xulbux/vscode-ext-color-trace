@@ -1,7 +1,7 @@
 {
   "name": "color-tracr",
   "displayName": "Color Tracr",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Highly performant, ultra-lightweight color marking extension for the editor.",
   "categories": [
     "Other",
@@ -60,6 +60,7 @@
     "@types/node": "^26.1.0",
     "@types/vscode": "^1.125.0",
     "esbuild": "^0.25.0",
+    "jiti": "^2.7.0",
     "oxfmt": "^0.36.0",
     "oxlint": "^1.71.0",
     "typescript": "^5.9.3"
@@ -76,7 +77,7 @@
           "default": [
             "*"
           ],
-          "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g. `!javascript`). Empty means disabled everywhere."
+          "description": "Language IDs where Color Tracr is enabled. Use `*` to enable for all, or prepend `!` to explicitly ignore a language (e.g., `!javascript`). Empty means disabled everywhere."
         },
         "colorTracr.excludePaths": {
           "type": "array",
@@ -109,7 +110,7 @@
         "colorTracr.markNamedColors": {
           "type": "boolean",
           "default": true,
-          "description": "Mark named CSS colors (e.g. `red`, `tomato`, …)."
+          "description": "Mark named CSS colors (e.g., `red`, `tomato`, …)."
         },
         "colorTracr.markVariables": {
           "type": "array",
@@ -137,7 +138,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Mark raw RGB numbers (e.g. `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Mark raw RGB numbers (e.g., `255, 0, 0`) even when not wrapped in `rgb()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTracr.matchHslWithNoFunction": {
           "type": "array",
@@ -145,7 +146,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Mark raw HSL numbers (e.g. `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Mark raw HSL numbers (e.g., `255, 100%, 50%`) even when not wrapped in `hsl()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTracr.matchLchWithNoFunction": {
           "type": "array",
@@ -153,7 +154,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Mark raw LCH numbers (e.g. `60% 40 25`) even when not wrapped in `lch()`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Mark raw LCH numbers (e.g., `60% 40 25`) even when not wrapped in `lch()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTracr.matchOklchWithNoFunction": {
           "type": "array",
@@ -161,7 +162,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Mark raw OKLCH numbers (e.g. `60% 0.15 25`) even when not wrapped in `oklch()`. Language IDs to mark. Use `*` to enable for all."
+          "description": "Mark raw OKLCH numbers (e.g., `60% 0.15 25`) even when not wrapped in `oklch()`. Language IDs to mark. Use `*` to enable for all."
         },
         "colorTracr.useARGB": {
           "type": "array",

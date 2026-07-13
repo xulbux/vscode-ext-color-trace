@@ -15,7 +15,7 @@ export const colorFnStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
-    // parts[0] is the color space (e.g. display-p3)
+    // `parts[0]` is the color space (e.g., display-p3)
     const [c1, c2, c3] = parts.slice(1, 4).map((t) => parsePercent(t));
     const a = parts[4] ? clampAlpha(parseAlpha(parts[4])) : 1;
 

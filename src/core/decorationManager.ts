@@ -1,5 +1,5 @@
 /**
- * Manages the creation, caching, and disposal of TextEditorDecorationTypes.
+ * Manages the creation, caching, and disposal of `TextEditorDecorationTypes`.
  *
  * Each unique visual style (determined by `bg`, `fg`, `border`, and `radius`)
  * gets its own decoration type, cached via an LRU Map.
@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
 import type { ColorData, DecorationEntry, DocumentResolvedConfig } from '@/types';
 import { alphaBlend, relativeLuminance } from '@/utils/color';
 
@@ -14,7 +15,7 @@ import { alphaBlend, relativeLuminance } from '@/utils/color';
 
 const LRU_CAPACITY = 4096;
 
-/** LRU cache: style fingerprint → DecorationEntry. */
+/** LRU cache: style fingerprint → `DecorationEntry`. */
 const cache = new Map<string, DecorationEntry>();
 
 /** Tracks which style keys are applied per editor to enable cleanup. */
@@ -35,7 +36,7 @@ function styleFingerprint(
   options: DocumentResolvedConfig,
   outlineCss: string
 ): string {
-  // Respect the showAlpha setting.
+  // Respect the `showAlpha` setting.
   const rgba = options.showAlpha ? color.rgba : { ...color.rgba, a: 1 };
 
   // If the marker is semi-transparent, blend it over the editor background first.
@@ -44,20 +45,31 @@ function styleFingerprint(
   const fg = lum > 0.179 ? '#000000' : '#FFFFFF';
 
   // Always use the native CSS string for the actual background decoration, unless we need to force opacity for the border.
-  // If showAlpha is false, use the pre-calculated opaqueCss instead of the native CSS string.
-  const bgCss = options.showAlpha ? color.css : color.opaqueCss;
+  // If `showAlpha` is false, use the pre-calculated opaqueCss instead of the native CSS string.
+  let bgCss = options.showAlpha ? color.css : color.opaqueCss;
   const isTransparent = rgba.a < 1;
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
   // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
   let borderColor = isTransparent ? color.opaqueCss : bgCss;
-  if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
+  const outline = outlineCss;
+
+  if (color.special === SPECIAL_TRANSPARENT) {
+    borderColor = 'transparent';
+    bgCss = 'transparent';
+  } else if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
     borderColor = 'transparent';
   }
 
-  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}|type:${options.markerType}`;
+  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outline}|type:${options.markerType}`;
 }
 
+/**
+ * Creates a new `TextEditorDecorationType` from a given fingerprint string.
+ *
+ * @param fingerprint   The style fingerprint.
+ * @returns The created `DecorationEntry`.
+ */
 function createEntry(fingerprint: string): DecorationEntry {
   let bg = 'transparent',
     fg = '#FFFFFF',
@@ -95,8 +107,8 @@ function createEntry(fingerprint: string): DecorationEntry {
     const dot = {
       backgroundColor: bg,
       contentText: '',
-      margin: type === 'dot-before' ? '0 0.25em 0 0.1em' : '0 0.1em 0 0.25em',
-      textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.9em; height: 0.9em; vertical-align: middle; transform: translateY(-8%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
+      margin: '0 0.25em',
+      textDecoration: `none; border-radius: 50%; box-sizing: border-box; display: inline-block; width: 0.95em; height: 0.95em; vertical-align: middle; transform: translateY(-9%); border: 0.15em solid ${borderColor}; box-shadow: 0 0 0 1px ${shadowColor};`,
     };
     decoOptions = {
       ...(type === 'dot-before' ? { before: dot } : { after: dot }),
@@ -123,6 +135,9 @@ function createEntry(fingerprint: string): DecorationEntry {
 
 /**
  * Add an entry to the LRU cache, evicting the oldest if at capacity.
+ *
+ * @param key     The style fingerprint string used as cache key.
+ * @param entry   The decoration entry to cache.
  */
 function addToCache(key: string, entry: DecorationEntry): void {
   if (cache.size >= LRU_CAPACITY) {
@@ -142,6 +157,9 @@ function addToCache(key: string, entry: DecorationEntry): void {
 
 /**
  * Stable identifier for an editor instance.
+ *
+ * @param editor   The VS Code text editor instance.
+ * @returns A string uniquely identifying the editor.
  */
 function editorKey(editor: vscode.TextEditor): string {
   return `${editor.document.uri.toString()}:${editor.viewColumn ?? 0}`;
@@ -153,7 +171,7 @@ function editorKey(editor: vscode.TextEditor): string {
  * Apply color decorations to a single editor.
  *
  * Groups the supplied color matches by computed visual style, creates or reuses
- * cached TextEditorDecorationTypes, and applies them in one batch per unique style.
+ * cached `TextEditorDecorationTypes`, and applies them in one batch per unique style.
  *
  * @param editor    The editor to decorate.
  * @param matches   Color matches with resolved RGBA and document ranges.
@@ -246,6 +264,25 @@ export function clearDecorations(editor: vscode.TextEditor): void {
   }
 
   editorStyleKeys.delete(editorId);
+}
+
+/**
+ * Removes tracking for editors that are no longer visible.
+ */
+export function cleanupEditors(visibleEditors: readonly vscode.TextEditor[]): void {
+  const visibleIds = new Set(visibleEditors.map(editorKey));
+
+  for (const [editorId, keys] of editorStyleKeys.entries()) {
+    if (!visibleIds.has(editorId)) {
+      for (const key of keys) {
+        const entry = cache.get(key);
+        if (entry) {
+          entry.activeEditors.delete(editorId);
+        }
+      }
+      editorStyleKeys.delete(editorId);
+    }
+  }
 }
 
 /**

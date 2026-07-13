@@ -17,6 +17,9 @@ importers:
       esbuild:
         specifier: ^0.25.0
         version: 0.25.12
+      jiti:
+        specifier: ^2.7.0
+        version: 2.7.0
       oxfmt:
         specifier: ^0.36.0
         version: 0.36.0
@@ -440,6 +443,10 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
+  jiti@2.7.0:
+    resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
+    hasBin: true
+
   oxfmt@0.36.0:
     resolution: {integrity: sha512-/ejJ+KoSW6J9bcNT9a9UtJSJNWhJ3yOLSBLbkoFHJs/8CZjmaZVZAJe4YgO1KMJlKpNQasrn/G9JQUEZI3p0EQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -698,6 +705,8 @@ snapshots:
       '@esbuild/win32-arm64': 0.25.12
       '@esbuild/win32-ia32': 0.25.12
       '@esbuild/win32-x64': 0.25.12
+
+  jiti@2.7.0: {}
 
   oxfmt@0.36.0:
     dependencies:

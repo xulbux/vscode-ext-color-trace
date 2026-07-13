@@ -16,7 +16,7 @@ function defaultBackgroundForThemeKind(): string {
   if (kind === vscode.ColorThemeKind.Light || kind === vscode.ColorThemeKind.HighContrastLight) {
     return '#FFFFFF';
   }
-  return '#1E1E1E';
+  return '#121314';
 }
 
 /**
@@ -24,7 +24,7 @@ function defaultBackgroundForThemeKind(): string {
  *
  * 1.  Workspace `workbench.colorCustomizations` → `editor.background`
  * 2.  User-level `colorTracr.editorBackground`
- * 3.  Inferred from the active color theme kind
+ * 3.  Inferred from the active color theme kind.
  */
 function getEditorBackgroundHex(): string {
   // Try workspace color customizations.
@@ -56,12 +56,14 @@ export function resolveEditorBackground(): RGBA {
  * Background resolution order:
  * 1.  `workbench.colorCustomizations["editor.background"]` (workspace)
  * 2.  `colorTracr.editorBackground` (user setting)
- * 3.  Auto-detect from the active color theme kind
+ * 3.  Auto-detect from the active color theme kind.
  */
 let cachedConfig: ExtensionConfig | undefined = undefined;
+let cachedEditorBackground: RGBA | undefined = undefined;
 
 export function invalidateConfigCache(): void {
   cachedConfig = undefined;
+  cachedEditorBackground = undefined;
 }
 
 export function readConfig(): ExtensionConfig {
@@ -72,7 +74,6 @@ export function readConfig(): ExtensionConfig {
   const cfg = vscode.workspace.getConfiguration('colorTracr');
 
   cachedConfig = {
-    editorBackground: resolveEditorBackground(),
     enable: cfg.get<string[]>('enable', ['*']),
     excludePaths: cfg.get<string[]>('excludePaths', [
       '**/node_modules/**',
@@ -109,8 +110,12 @@ export function resolveDocumentConfig(
   config: ExtensionConfig,
   languageId: string
 ): DocumentResolvedConfig {
+  if (!cachedEditorBackground) {
+    cachedEditorBackground = resolveEditorBackground();
+  }
+
   return {
-    editorBackground: config.editorBackground,
+    editorBackground: cachedEditorBackground,
     enable: isLanguageEnabled(languageId, config.enable),
     markNamedColors: config.markNamedColors,
     markTailwind: isLanguageEnabled(languageId, config.markTailwind),

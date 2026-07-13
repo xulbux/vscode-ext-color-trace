@@ -19,40 +19,30 @@ export const hslStrategy: ColorParsingStrategy = {
    * Extracts HSL color data from a matched string.
    */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    let h = 0;
-    let s = 0;
-    let l = 0;
-    let a = 1;
+    let tokens: string[] | undefined = undefined;
     const lower = matchText.trim().toLowerCase();
 
     if (!lower.startsWith('hsl')) {
       if (!options?.matchHslWithNoFunction) {
         return undefined;
       }
-      const tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+      tokens = matchText.split(/[\s,/]+/).filter(Boolean);
       if (tokens.length < 3) {
         return undefined;
       }
       if (!tokens[1].includes('%') || !tokens[2].includes('%')) {
         return undefined;
       }
-      h = parseHue(tokens[0]);
-      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
-      s = sVal;
-      l = lVal;
-      a = clampAlpha(parseAlpha(tokens[3]));
     } else {
-      const tokens = parseColorTokens(matchText, ['hsl']);
+      tokens = parseColorTokens(matchText, ['hsl']);
       if (!tokens) {
         return undefined;
       }
-
-      h = parseHue(tokens[0]);
-      const [sVal, lVal] = tokens.slice(1, 3).map((t) => parsePercent(t));
-      s = sVal;
-      l = lVal;
-      a = clampAlpha(parseAlpha(tokens[3]));
     }
+
+    const h = parseHue(tokens[0]);
+    const [s, l] = tokens.slice(1, 3).map((t) => parsePercent(t));
+    const a = clampAlpha(parseAlpha(tokens[3]));
 
     if (Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(l) || Number.isNaN(a)) {
       return undefined;

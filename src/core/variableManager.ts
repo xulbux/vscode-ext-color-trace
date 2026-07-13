@@ -8,14 +8,19 @@ import type { ColorData } from '@/types';
 
 /**
  * Global store of CSS variables extracted from the workspace.
- * This allows resolving `var(--name)` and Tailwind classes (e.g. `text-red`)
+ * This allows resolving `var(--name)` and Tailwind classes (e.g., `text-red`)
  * even across different files, as long as the definition file was opened.
  */
-const globalVariables = new Map<string, { color: ColorData; uri: string }>();
+const globalVariables = new Map<string, Map<string, ColorData>>();
 const variablesByUri = new Map<string, Set<string>>();
 
 export function setVariable(name: string, color: ColorData, uri: string): void {
-  globalVariables.set(name, { color, uri });
+  let varMap = globalVariables.get(name);
+  if (!varMap) {
+    varMap = new Map();
+    globalVariables.set(name, varMap);
+  }
+  varMap.set(uri, color);
 
   let uriVars = variablesByUri.get(uri);
   if (!uriVars) {
@@ -26,14 +31,24 @@ export function setVariable(name: string, color: ColorData, uri: string): void {
 }
 
 export function getVariable(name: string): ColorData | undefined {
-  return globalVariables.get(name)?.color;
+  const varMap = globalVariables.get(name);
+  if (varMap && varMap.size > 0) {
+    return varMap.values().next().value;
+  }
+  return undefined;
 }
 
 export function clearVariablesForUri(uri: string): void {
   const uriVars = variablesByUri.get(uri);
   if (uriVars) {
     for (const name of uriVars) {
-      globalVariables.delete(name);
+      const varMap = globalVariables.get(name);
+      if (varMap) {
+        varMap.delete(uri);
+        if (varMap.size === 0) {
+          globalVariables.delete(name);
+        }
+      }
     }
     variablesByUri.delete(uri);
   }
@@ -44,9 +59,10 @@ export function getVariablesForUri(uri: string): Map<string, ColorData> {
   const uriVars = variablesByUri.get(uri);
   if (uriVars) {
     for (const name of uriVars) {
-      const v = globalVariables.get(name);
-      if (v) {
-        result.set(name, v.color);
+      const varMap = globalVariables.get(name);
+      const color = varMap?.get(uri);
+      if (color) {
+        result.set(name, color);
       }
     }
   }

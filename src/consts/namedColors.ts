@@ -1,13 +1,15 @@
+import { SPECIAL_TRANSPARENT } from './specialColors';
+
 /**
  * All 148 CSS named colors mapped to their `[R, G, B]` tuples,
- * plus `transparent` as a special-case entry (alpha handled by the parser).
+ * and `transparent` as a special-case entry (alpha handled by the parser).
  *
- * @see  https://www.w3.org/TR/css-color-4/#named-colors
+ * @see https://www.w3.org/TR/css-color-4/#named-colors
  */
-export const NAMED_COLORS: ReadonlyMap<string, [number, number, number]> = new Map<
+export const NAMED_COLORS: ReadonlyMap<
   string,
-  [number, number, number]
->([
+  [number, number, number] | typeof SPECIAL_TRANSPARENT
+> = new Map<string, [number, number, number] | typeof SPECIAL_TRANSPARENT>([
   ['aliceblue', [240, 248, 255]],
   ['antiquewhite', [250, 235, 215]],
   ['aqua', [0, 255, 255]],
@@ -149,7 +151,7 @@ export const NAMED_COLORS: ReadonlyMap<string, [number, number, number]> = new M
   ['teal', [0, 128, 128]],
   ['thistle', [216, 191, 216]],
   ['tomato', [255, 99, 71]],
-  ['transparent', [0, 0, 0]],
+  ['transparent', SPECIAL_TRANSPARENT],
   ['turquoise', [64, 224, 208]],
   ['violet', [238, 130, 238]],
   ['wheat', [245, 222, 179]],

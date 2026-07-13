@@ -9,8 +9,10 @@
 import * as vscode from 'vscode';
 import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/config';
 import { extractColors } from '@/core/colorParser';
-import { clearDecorations, disposeAll } from '@/core/decorationManager';
+import { clearDecorations, cleanupEditors, disposeAll } from '@/core/decorationManager';
+import { resolveSassImports } from '@/core/sassResolver';
 import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
+import { loadTailwindConfigs } from '@/core/tailwindConfig';
 import {
   areVariablesEqual,
   clearVariablesForUri,
@@ -27,6 +29,8 @@ const changedDocuments = new Set<vscode.TextDocument>();
 const EDIT_DEBOUNCE = 150;
 /** Delay before re-scanning to let other extensions' `DocumentColorProviders` load (ms). */
 const PROVIDER_WARMUP_DELAY = 2000;
+
+let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
 // -------------------------------------- ACTIVATION -------------------------------------
 
@@ -89,11 +93,22 @@ export function activate(context: vscode.ExtensionContext): void {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
 
+        await resolveSassImports(
+          uris.filter(
+            (uri) =>
+              uri.fsPath.endsWith('.scss') ||
+              uri.fsPath.endsWith('.sass') ||
+              uri.fsPath.endsWith('.less')
+          ),
+          resolveDocumentConfig(config, 'scss')
+        );
+        await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
+
         clearCache();
         scanAllVisible(config);
       });
 
-    // [3] Re-scan after a short delay so DocumentColorProviders have time to initialize.
+    // [3] Re-scan after a short delay so `DocumentColorProviders` have time to initialize.
     setTimeout(() => {
       clearCache();
       scanAllVisible(config);
@@ -164,6 +179,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Visible editors changed (tabs opened/closed/split) ---
   context.subscriptions.push(
     vscode.window.onDidChangeVisibleTextEditors((editors) => {
+      cleanupEditors(editors);
       if (!config.enable) {
         return;
       }
@@ -177,6 +193,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
       invalidateCache(doc.uri.toString());
+      changedDocuments.delete(doc);
     })
   );
 
@@ -193,8 +210,6 @@ export function activate(context: vscode.ExtensionContext): void {
       }
     })
   );
-
-  let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 
   // --- Diagnostics changed (errors/warnings) ---
   context.subscriptions.push(
@@ -272,6 +287,27 @@ export function activate(context: vscode.ExtensionContext): void {
       scanAllVisible(config);
     })
   );
+
+  // --- Tailwind Configs changed ---
+  const twWatcher = vscode.workspace.createFileSystemWatcher('**/tailwind.config.{js,ts,cjs,mjs}');
+  context.subscriptions.push(
+    twWatcher.onDidChange(async () => {
+      await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher.onDidCreate(async () => {
+      await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher.onDidDelete((uri) => {
+      clearVariablesForUri(uri.toString());
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher
+  );
 }
 
 // ------------------------------------- DEACTIVATION ------------------------------------
@@ -279,6 +315,9 @@ export function activate(context: vscode.ExtensionContext): void {
 export function deactivate(): void {
   if (updateTimer !== undefined) {
     clearTimeout(updateTimer);
+  }
+  if (diagTimer !== undefined) {
+    clearTimeout(diagTimer);
   }
   disposeAll();
   clearCache();

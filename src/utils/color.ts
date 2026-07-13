@@ -1,8 +1,27 @@
 /**
- * Pure color math utilities; No vscode dependency.
+ * Color math utilities.
  */
 
 import type { RGBA } from '@/types';
+
+function hueToRgb(hue: number, c: number, x: number): [number, number, number] {
+  if (hue < 60) {
+    return [c, x, 0];
+  }
+  if (hue < 120) {
+    return [x, c, 0];
+  }
+  if (hue < 180) {
+    return [0, c, x];
+  }
+  if (hue < 240) {
+    return [0, x, c];
+  }
+  if (hue < 300) {
+    return [x, 0, c];
+  }
+  return [c, 0, x];
+}
 
 /**
  * Convert HSL to RGB.
@@ -17,35 +36,7 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
   const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
   const m = l - c / 2;
 
-  let r = 0,
-    g = 0,
-    b = 0;
-
-  if (hue < 60) {
-    r = c;
-    g = x;
-    b = 0;
-  } else if (hue < 120) {
-    r = x;
-    g = c;
-    b = 0;
-  } else if (hue < 180) {
-    r = 0;
-    g = c;
-    b = x;
-  } else if (hue < 240) {
-    r = 0;
-    g = x;
-    b = c;
-  } else if (hue < 300) {
-    r = x;
-    g = 0;
-    b = c;
-  } else {
-    r = c;
-    g = 0;
-    b = x;
-  }
+  const [r, g, b] = hueToRgb(hue, c, x);
 
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
@@ -58,7 +49,7 @@ export function hslToRgb(h: number, s: number, l: number): [number, number, numb
  * @returns `[r, g, b]` each 0-255
  */
 export function hwbToRgb(h: number, w: number, b: number): [number, number, number] {
-  // When w + b >= 1 the color is a neutral grey.
+  // When `w + b >= 1` the color is a neutral grey.
   if (w + b >= 1) {
     const grey = Math.round((w / (w + b)) * 255);
     return [grey, grey, grey];
@@ -88,35 +79,7 @@ export function hsvToRgb(h: number, s: number, v: number): [number, number, numb
   const x = c * (1 - Math.abs(((hue / 60) % 2) - 1));
   const m = v - c;
 
-  let r = 0;
-  let g = 0;
-  let b = 0;
-
-  if (hue < 60) {
-    r = c;
-    g = x;
-    b = 0;
-  } else if (hue < 120) {
-    r = x;
-    g = c;
-    b = 0;
-  } else if (hue < 180) {
-    r = 0;
-    g = c;
-    b = x;
-  } else if (hue < 240) {
-    r = 0;
-    g = x;
-    b = c;
-  } else if (hue < 300) {
-    r = x;
-    g = 0;
-    b = c;
-  } else {
-    r = c;
-    g = 0;
-    b = x;
-  }
+  const [r, g, b] = hueToRgb(hue, c, x);
 
   return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
 }
@@ -193,8 +156,8 @@ export function rgbaToHexString(rgba: RGBA): string {
 
 /**
  * Format a raw hex digits string into standard CSS hex strings.
- * @param digits    The raw hex digits (e.g. `RRGGBBAA` or `RGB`).
- * @param useARGB   If true, 8-digit hexes are interpreted as `#AARRGGBB`.
+ * @param digits    The raw hex digits (e.g., `RRGGBBAA` or `RGB`).
+ * @param useARGB   If true, 4- and 8-digit hexes are interpreted as ARGB.
  * @returns An object with the native CSS string and its fully opaque version.
  */
 export function formatHexCss(

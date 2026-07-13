@@ -1,11 +1,11 @@
 <span id="top" />
 
-# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" width="36" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" height="34" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
 
 ### Highly performant, ultra-lightweight color marking extension for the editor.
 
 This VS Code extension provides color marking for various formats, including CSS variables, Tailwind classes, and wide-gamut colors.<br>
-It is built to be fast, lightweight, and resource-efficient, featuring **zero runtime dependencies**, so your editor never slows down.
+It is built to be fast, lightweight, and resource-efficient, featuring **a fully bundled, hyper-optimized architecture**, so your editor never slows down.
 
 > <br>
 > 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
@@ -55,7 +55,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
     </tr>
     <tr>
       <td align="left"><strong>Tailwind CSS</strong></td>
-      <td align="left">Classes like <code>bg-red-500</code>, <code>text-blue-200/50</code>, <code>border-slate-900</code>, …</td>
+      <td align="left">Classes like <code>text-slate-900</code>, <code>border-white/20</code>, <code>bg-rose-500</code>, …</td>
     </tr>
     <tr>
       <td align="left"><strong>Variable Tracing</strong></td>
@@ -73,11 +73,18 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 
 ### CSS
 
-<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css.png?raw=true" alt="CSS | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-dark.png?raw=true" alt="CSS | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/css-light.png?raw=true" alt="CSS | Color Markers"></a>
 
 ### TypeScript
 
-<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts.png?raw=true" alt="TypeScript | Color Markers"></a>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-dark.png?raw=true" alt="TypeScript | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/ts-light.png?raw=true" alt="TypeScript | Color Markers"></a>
+
+### React
+
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-dark.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-dark.png?raw=true" alt="CSS | Color Markers"></a><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-light.png"><img src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/preview/tsx-light.png?raw=true" alt="CSS | Color Markers"></a>
 
 <br>
 <br>
@@ -85,7 +92,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 ## Acknowledgments 🤝
 
 This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
-`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, zero-dependency architecture.
+`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, minimal-footprint architecture.
 
 <br>
 <br>

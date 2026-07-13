@@ -1,18 +1,19 @@
 /**
  * Bridge to VS Code's built-in `vscode.executeDocumentColorProvider` command.
  *
- * This aggregates color information from ALL registered DocumentColorProviders,
+ * This aggregates color information from ALL registered `DocumentColorProviders`,
  * including the built-in CSS language service (which resolves `var()` references)
  * and Tailwind CSS IntelliSense (if installed).
  */
 
 import * as vscode from 'vscode';
-import { NAMED_COLORS } from '@/providers/namedColors';
-import type { ColorMatch, DocumentResolvedConfig } from '@/types';
+import { NAMED_COLORS } from '@/consts/namedColors';
+import { hexStrategy } from '@/core/strategies/hex';
+import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 
 /**
- * Query all registered DocumentColorProviders for the given document.
+ * Query all registered `DocumentColorProviders` for the given document.
  *
  * @returns `ColorMatch[]` derived from other extensions' color providers.
  *          Returns an empty array if no providers are available.
@@ -88,21 +89,28 @@ export async function getProviderColors(
       }
 
       if (isValid) {
-        // VS Code's Color uses 0-1 for all channels.
-        const rgba = {
-          a: info.color.alpha,
-          b: Math.round(info.color.blue * 255),
-          g: Math.round(info.color.green * 255),
-          r: Math.round(info.color.red * 255),
-        };
+        let colorData: ColorData | undefined = undefined;
 
-        const opaqueCss = `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
-        matches.push({
-          color: { css: originalText, opaqueCss, rgba },
-          endOffset,
-          originalText,
-          startOffset,
-        });
+        // If `useARGB` is enabled, re-evaluate hex colors from providers because VS Code built-in
+        // providers always treat hex colors as RGBA, completely ignoring the user's ARGB preference.
+        if (options.useARGB && /^(?:#|0x)(?:[0-9A-F]{4}|[0-9A-F]{8})$/i.test(originalText.trim())) {
+          colorData = hexStrategy.extract(originalText, options);
+        }
+
+        if (!colorData) {
+          // VS Code's Color uses 0-1 for all channels.
+          const rgba = {
+            a: info.color.alpha,
+            b: Math.round(info.color.blue * 255),
+            g: Math.round(info.color.green * 255),
+            r: Math.round(info.color.red * 255),
+          };
+
+          const opaqueCss = `rgb(${rgba.r}, ${rgba.g}, ${rgba.b})`;
+          colorData = { css: originalText, opaqueCss, rgba };
+        }
+
+        matches.push({ color: colorData, endOffset, originalText, startOffset });
       }
     }
 
