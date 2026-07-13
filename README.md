@@ -5,7 +5,7 @@
 ### Highly performant, ultra-lightweight color marking extension for the editor.
 
 This VS Code extension provides color marking for various formats, including CSS variables, Tailwind classes, and wide-gamut colors.<br>
-It is built to be fast, lightweight, and resource-efficient, featuring **zero runtime dependencies**, so your editor never slows down.
+It is built to be fast, lightweight, and resource-efficient, featuring **a fully bundled, hyper-optimized architecture**, so your editor never slows down.
 
 > <br>
 > 🎨 To get a better feeling of how the markers look on your code, continue at the <a href="#previews"><strong>previews</strong></a>.
@@ -92,7 +92,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 ## Acknowledgments 🤝
 
 This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
-`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, zero-dependency architecture.
+`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, minimal-footprint architecture.
 
 <br>
 <br>
