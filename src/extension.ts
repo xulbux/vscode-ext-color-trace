@@ -285,6 +285,27 @@ export function activate(context: vscode.ExtensionContext): void {
       scanAllVisible(config);
     })
   );
+
+  // --- Tailwind Configs changed ---
+  const twWatcher = vscode.workspace.createFileSystemWatcher('**/tailwind.config.{js,ts,cjs,mjs}');
+  context.subscriptions.push(
+    twWatcher.onDidChange(async () => {
+      await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher.onDidCreate(async () => {
+      await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher.onDidDelete((uri) => {
+      clearVariablesForUri(uri.toString());
+      clearCache();
+      scanAllVisible(config);
+    }),
+    twWatcher
+  );
 }
 
 // ------------------------------------- DEACTIVATION ------------------------------------

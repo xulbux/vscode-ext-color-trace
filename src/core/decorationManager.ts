@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
 import type { ColorData, DecorationEntry, DocumentResolvedConfig } from '@/types';
 import { alphaBlend, relativeLuminance } from '@/utils/color';
 
@@ -45,17 +46,22 @@ function styleFingerprint(
 
   // Always use the native CSS string for the actual background decoration, unless we need to force opacity for the border.
   // If `showAlpha` is false, use the pre-calculated opaqueCss instead of the native CSS string.
-  const bgCss = options.showAlpha ? color.css : color.opaqueCss;
+  let bgCss = options.showAlpha ? color.css : color.opaqueCss;
   const isTransparent = rgba.a < 1;
 
   // For transparent colors, use the opaque version for the border (so the border is solid).
   // Special case: for the `transparent` CSS keyword, make the border transparent too so it doesn't render black.
   let borderColor = isTransparent ? color.opaqueCss : bgCss;
-  if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
+  const outline = outlineCss;
+
+  if (color.special === SPECIAL_TRANSPARENT) {
+    borderColor = 'transparent';
+    bgCss = 'transparent';
+  } else if (color.css.toLowerCase() === 'transparent' && options.showAlpha) {
     borderColor = 'transparent';
   }
 
-  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outlineCss}|type:${options.markerType}`;
+  return `bg:${bgCss}|fg:${fg}|borderColor:${borderColor}|outline:${outline}|type:${options.markerType}`;
 }
 
 /**

@@ -2,7 +2,7 @@ import { createJiti } from 'jiti';
 import * as vscode from 'vscode';
 import type { DocumentResolvedConfig } from '@/types';
 import { extractWithStrategies } from './strategies';
-import { setVariable } from './variableManager';
+import { clearVariablesForUri, setVariable } from './variableManager';
 
 function flattenColors(colors: unknown, prefix = ''): Record<string, string> {
   const result: Record<string, string> = {};
@@ -29,7 +29,7 @@ export async function loadTailwindConfigs(options: DocumentResolvedConfig) {
     uris.map(async (uri) => {
       try {
         const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || '/';
-        const jiti = createJiti(workspaceFolder);
+        const jiti = createJiti(workspaceFolder, { moduleCache: false, requireCache: false });
         const config = (await jiti.import(uri.fsPath, { default: true })) as Record<
           string,
           unknown
@@ -42,6 +42,8 @@ export async function loadTailwindConfigs(options: DocumentResolvedConfig) {
         };
 
         const flatColors = flattenColors(colors);
+
+        clearVariablesForUri(uri.toString());
 
         for (const [name, hex] of Object.entries(flatColors)) {
           if (typeof hex === 'string') {

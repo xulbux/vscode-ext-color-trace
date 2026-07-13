@@ -6,6 +6,8 @@ export interface RGBA {
   a: number;
 }
 
+import type { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
+
 /** Represents a parsed color with both its native CSS string and an RGBA fallback. */
 export interface ColorData {
   /** RGBA approximation used to calculate text foreground contrast. */
@@ -14,6 +16,8 @@ export interface ColorData {
   css: string;
   /** The native CSS string, but fully opaque, used when showAlpha is false. */
   opaqueCss: string;
+  /** Optional special token used to override default rendering behaviors. */
+  special?: typeof SPECIAL_TRANSPARENT;
 }
 
 import type { DocumentResolvedConfig } from './config';

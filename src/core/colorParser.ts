@@ -6,6 +6,7 @@
  */
 
 import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/consts/namedColors';
+import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
 import { TAILWIND_DEFAULTS } from '@/consts/tailwindColors';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractWithStrategies, strategies } from './strategies';
@@ -22,8 +23,16 @@ function getTailwindDefault(
   }
 
   const hex = TAILWIND_DEFAULTS.get(colorName);
-  if (hex && options) {
-    colorData = extractWithStrategies(hex, options);
+  if (hex === SPECIAL_TRANSPARENT) {
+    colorData = {
+      css: 'transparent',
+      opaqueCss: 'transparent',
+      rgba: { a: 0, b: 0, g: 0, r: 0 },
+      special: SPECIAL_TRANSPARENT,
+    };
+    tailwindDefaultCache.set(colorName, colorData);
+  } else if (hex && options) {
+    colorData = extractWithStrategies(hex as string, options);
     if (colorData) {
       tailwindDefaultCache.set(colorName, colorData);
     }
@@ -77,7 +86,7 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 
 // -------------------------------------- EXTRACTORS -------------------------------------
 
-function extractVariableUsages(text: string): ColorMatch[] {
+function extractVariableUsages(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
   if (!text.includes('var(') && !text.includes('$') && !text.includes('@')) {
     return [];
   }
@@ -85,7 +94,12 @@ function extractVariableUsages(text: string): ColorMatch[] {
   for (const varMatch of text.matchAll(VAR_USE_RE)) {
     const varName = varMatch.groups?.name1 || varMatch.groups?.name2;
     if (varName) {
-      const colorData = getVariable(varName);
+      let colorData = getVariable(varName);
+
+      if (!colorData && varName.startsWith('--color-')) {
+        colorData = getTailwindDefault(varName.slice(8), options);
+      }
+
       if (colorData) {
         const offset = varMatch.index + varMatch[0].indexOf(varName);
         const end = offset + varName.length;
@@ -194,16 +208,30 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
       const isClassFragment = isAdjacentToHyphen(text, offset, end);
 
       if (!isClassFragment) {
-        results.push({
-          color: {
-            css: wordMatch[0],
-            opaqueCss: word === 'transparent' ? '#000000' : wordMatch[0],
-            rgba: { a: word === 'transparent' ? 0 : 1, b: rgb[2], g: rgb[1], r: rgb[0] },
-          },
-          endOffset: end,
-          originalText: wordMatch[0],
-          startOffset: offset,
-        });
+        if (rgb === SPECIAL_TRANSPARENT) {
+          results.push({
+            color: {
+              css: 'transparent',
+              opaqueCss: 'transparent',
+              rgba: { a: 0, b: 0, g: 0, r: 0 },
+              special: SPECIAL_TRANSPARENT,
+            },
+            endOffset: end,
+            originalText: wordMatch[0],
+            startOffset: offset,
+          });
+        } else {
+          results.push({
+            color: {
+              css: wordMatch[0],
+              opaqueCss: wordMatch[0],
+              rgba: { a: 1, b: rgb[2], g: rgb[1], r: rgb[0] },
+            },
+            endOffset: end,
+            originalText: wordMatch[0],
+            startOffset: offset,
+          });
+        }
       }
     }
   }
@@ -299,7 +327,7 @@ export function extractColors(
 
   // [2] CSS Variable Usages.
   if (options.markVariables) {
-    results = mergeNonOverlapping(results, extractVariableUsages(text));
+    results = mergeNonOverlapping(results, extractVariableUsages(text, options));
   }
 
   // [3] Tailwind Classes.

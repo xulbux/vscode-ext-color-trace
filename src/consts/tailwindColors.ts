@@ -1,10 +1,15 @@
+import { SPECIAL_TRANSPARENT } from './specialColors';
+
 /**
- * All 286 Tailwind CSS default colors mapped to their OKLCH strings,
- * including black and white mapped to their hex values.
+ * All 288 Tailwind CSS default colors mapped to their OKLCH/hex strings,
+ * and `transparent` as a special-case entry (alpha handled by the parser).
  *
  * @see https://tailwindcss.com/docs/colors
  */
-export const TAILWIND_DEFAULTS: ReadonlyMap<string, string> = new Map<string, string>([
+export const TAILWIND_DEFAULTS: ReadonlyMap<string, string | typeof SPECIAL_TRANSPARENT> = new Map<
+  string,
+  string | typeof SPECIAL_TRANSPARENT
+>([
   ['amber-100', 'oklch(96.2% 0.059 95.617)'],
   ['amber-200', 'oklch(92.4% 0.12 95.746)'],
   ['amber-300', 'oklch(87.9% 0.169 91.605)'],
@@ -259,6 +264,7 @@ export const TAILWIND_DEFAULTS: ReadonlyMap<string, string> = new Map<string, st
   ['teal-800', 'oklch(43.7% 0.078 188.216)'],
   ['teal-900', 'oklch(38.6% 0.063 188.416)'],
   ['teal-950', 'oklch(27.7% 0.046 192.524)'],
+  ['transparent', SPECIAL_TRANSPARENT],
   ['violet-100', 'oklch(94.3% 0.029 294.588)'],
   ['violet-200', 'oklch(89.4% 0.057 293.283)'],
   ['violet-300', 'oklch(81.1% 0.111 293.571)'],
