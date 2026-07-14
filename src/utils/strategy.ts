@@ -19,6 +19,18 @@ export const BOUNDARY_END = String.raw`(?![a-z0-9_.%-])`;
 /** Hue: number with optional unit (`deg`, `rad`, `grad`, `turn`). */
 export const HUE = String.raw`(?:(?:\d+(?:\.\d+)?|\.\d+)(?:°|deg|rad|grad|turn)?|none)`;
 
+/** Splits raw (non-function) color tokens on whitespace, commas, and slashes. */
+export const RAW_TOKEN_SPLIT_RX = /[\s,/]+/;
+
+/** Matches an alpha channel specification (`/ <alpha>`) in a native CSS string. */
+const CSS_ALPHA_RX = /\s*\/\s*[\d.%]+/;
+
+/** Commas and slashes, replaced with spaces when normalizing function tokens. */
+const COMMA_SLASH_RX = /[,/]/g;
+
+/** Runs of whitespace, used to split normalized tokens. */
+const WHITESPACE_RX = /\s+/;
+
 /** Parse a numeric token as a 0-255 value or percentage. */
 export function parseChannel(token: string): number {
   if (token === 'none') {
@@ -99,12 +111,12 @@ export function extractTokens(
     return undefined; // Invalid: multiple slashes.
   }
 
-  const normalized = inner.replace(/[,/]/g, ' ').trim();
+  const normalized = inner.replace(COMMA_SLASH_RX, ' ').trim();
   if (!normalized) {
     return undefined;
   }
 
-  const tokens = normalized.split(/\s+/);
+  const tokens = normalized.split(WHITESPACE_RX);
 
   if (commaCount > 0 && commaCount !== tokens.length - 1) {
     return undefined; // Invalid: missing or extra commas.
@@ -155,5 +167,5 @@ export function clampAlpha(value: number): number {
  * @returns The opaque CSS string without the alpha.
  */
 export function removeCssAlpha(cssStr: string): string {
-  return cssStr.replace(/\s*\/\s*[\d.%]+/, '');
+  return cssStr.replace(CSS_ALPHA_RX, '');
 }

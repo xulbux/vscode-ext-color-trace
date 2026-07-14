@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import type { DocumentResolvedConfig } from '@/types';
 import { extractColors } from './colorParser';
 
-const IMPORT_RE = /@(?:import|use)\s+['"](?<path>[^'"]+)['"]/g;
+const IMPORT_RX = /@(?:import|use)\s+['"](?<path>[^'"]+)['"]/g;
 
 export async function resolveSassImports(uris: vscode.Uri[], config: DocumentResolvedConfig) {
   await Promise.all(
@@ -12,7 +12,7 @@ export async function resolveSassImports(uris: vscode.Uri[], config: DocumentRes
         const bytes = await vscode.workspace.fs.readFile(uri);
         const text = new TextDecoder().decode(bytes);
 
-        const promises = [...text.matchAll(IMPORT_RE)].map(async (match) => {
+        const promises = [...text.matchAll(IMPORT_RX)].map(async (match) => {
           const importPath = match.groups?.path;
           if (importPath) {
             let resolvedPath = '';

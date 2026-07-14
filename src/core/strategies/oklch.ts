@@ -6,6 +6,7 @@ import {
   BOUNDARY_START,
   HUE,
   NUM,
+  RAW_TOKEN_SPLIT_RX,
   clampAlpha,
   parseAlpha,
   parseColorTokens,
@@ -44,7 +45,7 @@ function getOklchTokens(
       return undefined;
     }
 
-    const tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+    const tokens = matchText.split(RAW_TOKEN_SPLIT_RX).filter(Boolean);
     if (tokens.length < 3) {
       return undefined;
     }

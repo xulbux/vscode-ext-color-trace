@@ -8,7 +8,7 @@
 
 import * as vscode from 'vscode';
 import { NAMED_COLORS } from '@/consts/namedColors';
-import { hexStrategy } from '@/core/strategies/hex';
+import { HEX_ARGB_RX, hexStrategy } from '@/core/strategies/hex';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
 import { extractTokens } from '@/utils/strategy';
 
@@ -93,7 +93,7 @@ export async function getProviderColors(
 
         // If `useARGB` is enabled, re-evaluate hex colors from providers because VS Code built-in
         // providers always treat hex colors as RGBA, completely ignoring the user's ARGB preference.
-        if (options.useARGB && /^(?:#|0x)(?:[0-9A-F]{4}|[0-9A-F]{8})$/i.test(originalText.trim())) {
+        if (options.useARGB && HEX_ARGB_RX.test(originalText.trim())) {
           colorData = hexStrategy.extract(originalText, options);
         }
 

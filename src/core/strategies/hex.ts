@@ -1,6 +1,15 @@
 import type { ColorData, ColorParsingStrategy, DocumentResolvedConfig } from '@/types';
 import { formatHexCss } from '@/utils/color';
 
+/** Matches a standalone hex color literal (`#RGB[A]`, `#RRGGBB[AA]`, or `0x…`). */
+export const HEX_RX = /^(?:#|0[xX])(?<hexDigits>[0-9a-fA-F]{3,8})$/;
+
+/** Matches a bare run of hex digits (e.g., Hyprland-style `rgb(HEX)`). */
+export const HEX_DIGITS_RX = /^[0-9a-fA-F]+$/;
+
+/** Matches a 4- or 8-digit hex literal (used when re-evaluating `useARGB` colors). */
+export const HEX_ARGB_RX = /^(?:#|0[xX])(?:[0-9a-fA-F]{4}|[0-9a-fA-F]{8})$/;
+
 /**
  * Parses a hex string into an RGBA object.
  * @param digits    The raw hex digits.
@@ -68,7 +77,7 @@ export const hexStrategy: ColorParsingStrategy = {
    * Extracts hex color data from a matched string.
    */
   extract(matchText: string, options?: DocumentResolvedConfig): ColorData | undefined {
-    const match = /^(?:#|0x)(?<hexDigits>[0-9A-F]{3,8})$/i.exec(matchText.trim());
+    const match = HEX_RX.exec(matchText.trim());
     if (!match) {
       return undefined;
     }
@@ -84,6 +93,6 @@ export const hexStrategy: ColorParsingStrategy = {
     return { css: cssStr, opaqueCss, rgba };
   },
   id: 'hex',
-  /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x…` equivalents */
+  /** Hexa pattern: `#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA` and `0x…` equivalents. */
   pattern: String.raw`(?:#|0x)(?:[0-9A-F]{3,4}|[0-9A-F]{6}|[0-9A-F]{8})\b`,
 };

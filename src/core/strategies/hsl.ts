@@ -7,6 +7,7 @@ import {
   PERCENT,
   BOUNDARY_START,
   BOUNDARY_END,
+  RAW_TOKEN_SPLIT_RX,
   clampAlpha,
   parseAlpha,
   parseColorTokens,
@@ -26,7 +27,7 @@ export const hslStrategy: ColorParsingStrategy = {
       if (!options?.matchHslWithNoFunction) {
         return undefined;
       }
-      tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+      tokens = matchText.split(RAW_TOKEN_SPLIT_RX).filter(Boolean);
       if (tokens.length < 3) {
         return undefined;
       }

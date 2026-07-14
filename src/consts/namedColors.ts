@@ -192,3 +192,6 @@ export const MIXED_CSS_LANGUAGES: ReadonlySet<string> = new Set<string>([
   'vue',
   'xml',
 ]);
+
+/** Matches any valid CSS named color as a whole word (case-insensitive). */
+export const WORD_RX = new RegExp(`\\b(?:${[...NAMED_COLORS.keys()].join('|')})\\b`, 'gi');
