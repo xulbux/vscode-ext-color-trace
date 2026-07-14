@@ -100,42 +100,91 @@ function isPossibleVariableDef(text: string, index: number): boolean {
   return false;
 }
 
-function extractVariableUsages(
-  text: string,
-  options?: DocumentResolvedConfig,
-  onRegisterVariable?: (name: string, color: ColorData, index: number) => void
+function generateUsageMatches(
+  varUsages: { name: string; start: number; end: number; matchText: string }[],
+  options: DocumentResolvedConfig & { uri?: string; extractOnly?: boolean }
 ): ColorMatch[] {
+  const usageMatches: ColorMatch[] = [];
+  for (const usage of varUsages) {
+    let colorData = getVariable(usage.name);
+    if (!colorData && usage.name.startsWith('--color-')) {
+      colorData = getTailwindDefault(usage.name.slice(8), options);
+    }
+    if (colorData) {
+      usageMatches.push({
+        color: colorData,
+        endOffset: usage.end,
+        originalText: usage.matchText,
+        startOffset: usage.start,
+      });
+    }
+  }
+  return usageMatches;
+}
+
+// oxlint-disable-next-line complexity
+function resolveAliasesAndUsages(
+  text: string,
+  options: DocumentResolvedConfig & { uri?: string; extractOnly?: boolean },
+  isInsideComment: (index: number) => boolean
+): ColorMatch[] {
+  interface AliasDef {
+    target: string;
+    source: string;
+  }
+  const aliases: AliasDef[] = [];
+  const varUsages: { name: string; start: number; end: number; matchText: string }[] = [];
+
   if (!text.includes('var(') && !text.includes('$') && !text.includes('@')) {
     return [];
   }
-  const results: ColorMatch[] = [];
+
   for (const varMatch of text.matchAll(VAR_USE_RE)) {
     const varName = varMatch.groups?.name1 || varMatch.groups?.name2;
     if (varName) {
-      let colorData = getVariable(varName);
-
-      if (!colorData && varName.startsWith('--color-')) {
-        colorData = getTailwindDefault(varName.slice(8), options);
-      }
-
-      if (colorData) {
-        if (onRegisterVariable && isPossibleVariableDef(text, varMatch.index)) {
-          onRegisterVariable(varName, colorData, varMatch.index);
+      if (isPossibleVariableDef(text, varMatch.index)) {
+        const prefix = text.slice(Math.max(0, varMatch.index - 100), varMatch.index);
+        const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
+        if (defMatch?.groups && !isInsideComment(varMatch.index)) {
+          aliases.push({ source: varName, target: defMatch.groups.name });
         }
-
-        const offset = varMatch.index + varMatch[0].indexOf(varName);
-        const end = offset + varName.length;
-
-        results.push({
-          color: colorData,
-          endOffset: end,
-          originalText: varName,
-          startOffset: offset,
-        });
       }
+
+      const offset = varMatch.index + varMatch[0].indexOf(varName);
+      varUsages.push({
+        end: offset + varName.length,
+        matchText: varName,
+        name: varName,
+        start: offset,
+      });
     }
   }
-  return results;
+
+  // Resolve aliases iteratively (up to 5 levels deep) to handle forward references.
+  let changed = true;
+  let iterations = 0;
+  while (changed && iterations < 5) {
+    changed = false;
+    for (const alias of aliases) {
+      if (!getVariable(alias.target)) {
+        let colorData = getVariable(alias.source);
+        if (!colorData && alias.source.startsWith('--color-')) {
+          colorData = getTailwindDefault(alias.source.slice(8), options);
+        }
+        if (colorData) {
+          setVariable(alias.target, colorData, options.uri ?? '');
+          changed = true;
+        }
+      }
+    }
+    iterations += 1;
+  }
+
+  if (options.extractOnly || !options.markVariables) {
+    return [];
+  }
+
+  return generateUsageMatches(varUsages, options);
 }
 
 /** Check if a Tailwind class is properly bounded (not part of a CSS selector or longer word). */
@@ -346,20 +395,15 @@ export function extractColors(
     }
   }
 
+  // [2] Extract and resolve Variable Aliases, and CSS Variable Usages.
+  const usageMatches = resolveAliasesAndUsages(text, options, isInsideComment);
+
   if (options.extractOnly) {
     return results;
   }
 
-  // [2] CSS Variable Usages.
-  if (options.markVariables) {
-    const usages = extractVariableUsages(text, options, (varName, colorData, matchIndex) => {
-      const prefix = text.slice(Math.max(0, matchIndex - 100), matchIndex);
-      const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-      if (defMatch?.groups && !isInsideComment(matchIndex)) {
-        setVariable(defMatch.groups.name, colorData, options.uri ?? '');
-      }
-    });
-    results = mergeNonOverlapping(results, usages);
+  if (options.markVariables && usageMatches.length > 0) {
+    results = mergeNonOverlapping(results, usageMatches);
   }
 
   // [3] Tailwind Classes.
