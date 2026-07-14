@@ -31,18 +31,32 @@ export async function resolveSassImports(uris: vscode.Uri[], config: DocumentRes
               resolvedPath += '.scss';
             }
 
-            try {
-              const importUri = vscode.Uri.file(resolvedPath);
-              const importBytes = await vscode.workspace.fs.readFile(importUri);
-              const importText = new TextDecoder().decode(importBytes);
+            let importUri = vscode.Uri.file(resolvedPath);
+            let importBytes: Uint8Array | undefined = undefined;
 
+            try {
+              importBytes = await vscode.workspace.fs.readFile(importUri);
+            } catch {
+              // Try the SCSS partial convention (_filename).
+              const dir = path.dirname(resolvedPath);
+              const base = path.basename(resolvedPath);
+              if (!base.startsWith('_')) {
+                importUri = vscode.Uri.file(path.join(dir, `_${base}`));
+                try {
+                  importBytes = await vscode.workspace.fs.readFile(importUri);
+                } catch {
+                  // Ignore.
+                }
+              }
+            }
+
+            if (importBytes) {
+              const importText = new TextDecoder().decode(importBytes);
               extractColors(importText, 'scss', {
                 ...config,
                 extractOnly: true,
                 uri: importUri.toString(),
               });
-            } catch {
-              // File not found or not readable, ignore silently.
             }
           }
         });

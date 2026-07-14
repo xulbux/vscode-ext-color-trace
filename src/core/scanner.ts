@@ -64,7 +64,7 @@ function hasDiagnosticOverlap(
   activeDiagnostics: vscode.Diagnostic[]
 ): boolean {
   for (const diag of activeDiagnostics) {
-    if (diag.range.intersection(range)) {
+    if (diag.range.start.isBeforeOrEqual(range.end) && diag.range.end.isAfterOrEqual(range.start)) {
       return true;
     }
   }

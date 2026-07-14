@@ -86,7 +86,26 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
 
 // -------------------------------------- EXTRACTORS -------------------------------------
 
-function extractVariableUsages(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
+function isPossibleVariableDef(text: string, index: number): boolean {
+  let i = index - 1;
+  while (i >= 0 && i >= index - 100) {
+    const char = text[i];
+    if (char === ':') {
+      return true;
+    }
+    if (char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
+      return false;
+    }
+    i -= 1;
+  }
+  return false;
+}
+
+function extractVariableUsages(
+  text: string,
+  options?: DocumentResolvedConfig,
+  onRegisterVariable?: (name: string, color: ColorData, index: number) => void
+): ColorMatch[] {
   if (!text.includes('var(') && !text.includes('$') && !text.includes('@')) {
     return [];
   }
@@ -101,6 +120,10 @@ function extractVariableUsages(text: string, options?: DocumentResolvedConfig): 
       }
 
       if (colorData) {
+        if (onRegisterVariable && isPossibleVariableDef(text, varMatch.index)) {
+          onRegisterVariable(varName, colorData, varMatch.index);
+        }
+
         const offset = varMatch.index + varMatch[0].indexOf(varName);
         const end = offset + varName.length;
 
@@ -240,21 +263,6 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
 
 // -------------------------------------- PUBLIC API -------------------------------------
 
-function isPossibleVariableDef(text: string, index: number): boolean {
-  let i = index - 1;
-  while (i >= 0 && i >= index - 100) {
-    const char = text[i];
-    if (char === ':') {
-      return true;
-    }
-    if (char !== ' ' && char !== '\t' && char !== '\n' && char !== '\r') {
-      return false;
-    }
-    i -= 1;
-  }
-  return false;
-}
-
 /**
  * Extract all color literals from `text`.
  *
@@ -345,7 +353,14 @@ export function extractColors(
 
   // [2] CSS Variable Usages.
   if (options.markVariables) {
-    results = mergeNonOverlapping(results, extractVariableUsages(text, options));
+    const usages = extractVariableUsages(text, options, (varName, colorData, matchIndex) => {
+      const prefix = text.slice(Math.max(0, matchIndex - 100), matchIndex);
+      const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
+      if (defMatch?.groups && !isInsideComment(matchIndex)) {
+        setVariable(defMatch.groups.name, colorData, options.uri ?? '');
+      }
+    });
+    results = mergeNonOverlapping(results, usages);
   }
 
   // [3] Tailwind Classes.
