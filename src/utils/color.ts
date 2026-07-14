@@ -108,6 +108,54 @@ function linearize(channel: number): number {
   return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 }
 
+function linearSrgbToSrgb(c: number): number {
+  if (c <= 0.0031308) {
+    return 12.92 * c;
+  }
+  return 1.055 * c ** (1 / 2.4) - 0.055;
+}
+
+/**
+ * Convert OKLAB to RGB.
+ * @param l   Lightness (0-1)
+ * @param a   A axis
+ * @param b   B axis
+ * @returns `[r, g, b]` each 0-255
+ */
+export function oklabToRgb(l: number, a: number, b: number): [number, number, number] {
+  const lVal = l + 0.3963377774 * a + 0.2158037573 * b;
+  const mVal = l - 0.1055613458 * a - 0.0638541728 * b;
+  const sVal = l - 0.0894841775 * a - 1.291485548 * b;
+
+  const l3 = lVal * lVal * lVal;
+  const m3 = mVal * mVal * mVal;
+  const s3 = sVal * sVal * sVal;
+
+  const rLin = 4.0767416621 * l3 - 3.3077115913 * m3 + 0.2309699292 * s3;
+  const gLin = -1.2684380046 * l3 + 2.6097574011 * m3 - 0.3413193965 * s3;
+  const bLin = -0.0041960863 * l3 - 0.7034186147 * m3 + 1.707614701 * s3;
+
+  const rSrgb = Math.max(0, Math.min(1, linearSrgbToSrgb(rLin))) * 255;
+  const gSrgb = Math.max(0, Math.min(1, linearSrgbToSrgb(gLin))) * 255;
+  const bSrgb = Math.max(0, Math.min(1, linearSrgbToSrgb(bLin))) * 255;
+
+  return [Math.round(rSrgb), Math.round(gSrgb), Math.round(bSrgb)];
+}
+
+/**
+ * Convert OKLCH to RGB.
+ * @param l   Lightness (0-1)
+ * @param c   Chroma
+ * @param h   Hue (0-360)
+ * @returns `[r, g, b]` each 0-255
+ */
+export function oklchToRgb(l: number, c: number, h: number): [number, number, number] {
+  const hRad = (h * Math.PI) / 180;
+  const a = c * Math.cos(hRad);
+  const b = c * Math.sin(hRad);
+  return oklabToRgb(l, a, b);
+}
+
 /**
  * Compute WCAG 2.1 relative luminance.
  * @param r   Red    (0-255)
