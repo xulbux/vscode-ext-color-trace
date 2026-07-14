@@ -194,7 +194,7 @@ export function applyDecorations(
     config.editorBackground.b
   );
   const outlineCss =
-    editorLum > 0.179 ? '1px solid rgb(0 0 0 / 0.1)' : '1px solid rgb(255 255 255 / 0.16)';
+    editorLum > 0.179 ? '1px solid rgb(0 0 0 / 0.12)' : '1px solid rgb(255 255 255 / 0.2)';
 
   for (const { range, color } of matches) {
     const key = styleFingerprint(color, config, outlineCss);
