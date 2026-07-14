@@ -23,6 +23,7 @@ import { areVariablesEqual, clearVariablesForUri, getVariablesForUri } from './v
 // ---------------------------------------- CACHE ----------------------------------------
 
 const cache = new Map<string, CacheEntry>();
+const scanTokens = new Map<string, number>();
 
 // -------------------------------------- INTERNALS --------------------------------------
 
@@ -63,6 +64,9 @@ function hasDiagnosticOverlap(
   range: vscode.Range,
   activeDiagnostics: vscode.Diagnostic[]
 ): boolean {
+  if (activeDiagnostics.length === 0) {
+    return false;
+  }
   for (const diag of activeDiagnostics) {
     if (diag.range.start.isBeforeOrEqual(range.end) && diag.range.end.isAfterOrEqual(range.start)) {
       return true;
@@ -88,6 +92,21 @@ export function clearCache(): void {
 }
 
 /**
+ * Invalidate cache and trigger a scan for all visible editors except the one that changed.
+ */
+export function invalidateOtherVisibleEditors(changedUri: string, config: ExtensionConfig): void {
+  for (const visibleEditor of vscode.window.visibleTextEditors) {
+    if (visibleEditor.document.uri.toString() !== changedUri) {
+      invalidateCache(visibleEditor.document.uri.toString());
+      // oxlint-disable-next-line no-use-before-define
+      scanEditor(visibleEditor, config).catch(() => {
+        // Ignore.
+      });
+    }
+  }
+}
+
+/**
  * Scan the visible portions of an editor for colors and apply decorations.
  *
  * @param editor   The text editor to scan.
@@ -108,6 +127,9 @@ export async function scanEditor(
 
   const uri = doc.uri.toString();
   const { version } = doc;
+
+  const currentToken = (scanTokens.get(uri) ?? 0) + 1;
+  scanTokens.set(uri, currentToken);
 
   // Check cache; Skip if document hasn't changed.
   const cached = cache.get(uri);
@@ -136,14 +158,7 @@ export async function scanEditor(
   );
 
   if (!areVariablesEqual(beforeVars, afterVars)) {
-    for (const visibleEditor of vscode.window.visibleTextEditors) {
-      if (visibleEditor.document.uri.toString() !== uri) {
-        invalidateCache(visibleEditor.document.uri.toString());
-        scanEditor(visibleEditor, config).catch(() => {
-          // Ignore.
-        });
-      }
-    }
+    invalidateOtherVisibleEditors(uri, config);
   }
 
   // [2.5] Immediately apply fast regex matches for zero-latency feedback.
@@ -167,16 +182,26 @@ export async function scanEditor(
   // We do not await this so the initial regex colors render instantly.
   getProviderColors(doc, docConfig)
     .then((providerMatches) => {
-      // If the document changed while we were waiting, or there are no provider matches, discard.
-      if (doc.version !== version || providerMatches.length === 0) {
+      // If a newer scan has started for this document, or if there are no provider matches, discard.
+      if (scanTokens.get(uri) !== currentToken || providerMatches.length === 0) {
         return;
       }
+
+      // Re-fetch diagnostics to ensure we have the latest ones, preventing
+      // race conditions where diagnostics arrive while we were awaiting the provider.
+      const latestDiagnostics = vscode.languages
+        .getDiagnostics(doc.uri)
+        .filter(
+          (diagnostic) =>
+            diagnostic.severity === vscode.DiagnosticSeverity.Error ||
+            diagnostic.severity === vscode.DiagnosticSeverity.Warning
+        );
 
       // [4] Merge & deduplicate.
       const merged = mergeMatches(regexMatches, providerMatches, { config: docConfig, doc });
 
       const filteredMerged = merged.filter(
-        (m) => !hasDiagnosticOverlap(m.range, activeDiagnostics)
+        (m) => !hasDiagnosticOverlap(m.range, latestDiagnostics)
       );
 
       // [5] Cache full results.

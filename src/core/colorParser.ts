@@ -75,7 +75,6 @@ function getRegex(options: DocumentResolvedConfig): RegExp {
     colorRe = new RegExp(patterns.join('|'), 'gi');
     regexCache.set(key, colorRe);
   }
-  colorRe.lastIndex = 0;
   return colorRe;
 }
 

@@ -11,7 +11,12 @@ import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/conf
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, cleanupEditors, disposeAll } from '@/core/decorationManager';
 import { resolveSassImports } from '@/core/sassResolver';
-import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
+import {
+  clearCache,
+  invalidateCache,
+  scanEditor,
+  invalidateOtherVisibleEditors,
+} from '@/core/scanner';
 import { loadTailwindConfigs } from '@/core/tailwindConfig';
 import {
   areVariablesEqual,
@@ -155,10 +160,7 @@ export function activate(context: vscode.ExtensionContext): void {
             const afterVars = getVariablesForUri(uriStr);
 
             if (!areVariablesEqual(beforeVars, afterVars)) {
-              for (const visibleEditor of vscode.window.visibleTextEditors) {
-                invalidateCache(visibleEditor.document.uri.toString());
-                triggerScan(visibleEditor, config);
-              }
+              invalidateOtherVisibleEditors(uriStr, config);
             }
           }
         }
