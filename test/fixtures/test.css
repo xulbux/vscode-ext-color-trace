@@ -88,9 +88,11 @@
 /********************************* Variable Usages ********************************/
 
 .var-usage-test {
+  --alias: var(--secondary-color);
   color: var(--primary-color);
-  background-color: var(--bg-dark);
+  caret-color: var(--alias);
   border: 1px solid var(--color-brand-blue);
+  background-color: var(--bg-dark);
 }
 
 /****************************** Hyphen Boundary Tests *****************************/
@@ -105,7 +107,6 @@
 }
 
 /********************************* Tailwind @apply ********************************/
-/* Should NOT mark the color name from inside the class name. */
 
 .card-shadow {
   @apply shadow-lg border-gray-200;

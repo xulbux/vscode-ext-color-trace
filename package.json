@@ -1,7 +1,7 @@
 {
   "name": "color-tracr",
   "displayName": "Color Tracr",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Highly performant, ultra-lightweight color marking extension for the editor.",
   "categories": [
     "Other",

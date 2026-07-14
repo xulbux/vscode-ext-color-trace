@@ -11,7 +11,12 @@ import { invalidateConfigCache, readConfig, resolveDocumentConfig } from '@/conf
 import { extractColors } from '@/core/colorParser';
 import { clearDecorations, cleanupEditors, disposeAll } from '@/core/decorationManager';
 import { resolveSassImports } from '@/core/sassResolver';
-import { clearCache, invalidateCache, scanEditor } from '@/core/scanner';
+import {
+  clearCache,
+  invalidateCache,
+  scanEditor,
+  invalidateOtherVisibleEditors,
+} from '@/core/scanner';
 import { loadTailwindConfigs } from '@/core/tailwindConfig';
 import {
   areVariablesEqual,
@@ -50,7 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
   let config = readConfig();
 
   // --- Initial scan ---
-  if (config.enable) {
+  if (config.enable.length > 0) {
     // [1] Instantly scan visible editors (they might only have local colors).
     scanAllVisible(config);
 
@@ -118,7 +123,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Text document changed (typing) ---
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((event) => {
-      if (!config.enable) {
+      if (config.enable.length === 0) {
         return;
       }
 
@@ -155,10 +160,7 @@ export function activate(context: vscode.ExtensionContext): void {
             const afterVars = getVariablesForUri(uriStr);
 
             if (!areVariablesEqual(beforeVars, afterVars)) {
-              for (const visibleEditor of vscode.window.visibleTextEditors) {
-                invalidateCache(visibleEditor.document.uri.toString());
-                triggerScan(visibleEditor, config);
-              }
+              invalidateOtherVisibleEditors(uriStr, config);
             }
           }
         }
@@ -169,7 +171,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Active editor changed ---
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (!config.enable || !editor) {
+      if (config.enable.length === 0 || !editor) {
         return;
       }
       triggerScan(editor, config);
@@ -180,7 +182,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.window.onDidChangeVisibleTextEditors((editors) => {
       cleanupEditors(editors);
-      if (!config.enable) {
+      if (config.enable.length === 0) {
         return;
       }
       for (const editor of editors) {
@@ -214,7 +216,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Diagnostics changed (errors/warnings) ---
   context.subscriptions.push(
     vscode.languages.onDidChangeDiagnostics((event) => {
-      if (!config.enable) {
+      if (config.enable.length === 0) {
         return;
       }
 
@@ -251,7 +253,7 @@ export function activate(context: vscode.ExtensionContext): void {
         config = readConfig();
         clearCache();
 
-        if (config.enable) {
+        if (config.enable.length > 0) {
           scanAllVisible(config);
         } else {
           // Extension disabled; Remove all decorations.
@@ -270,7 +272,7 @@ export function activate(context: vscode.ExtensionContext): void {
       config = readConfig();
       clearCache();
 
-      if (config.enable) {
+      if (config.enable.length > 0) {
         scanAllVisible(config);
       }
     })
@@ -279,7 +281,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Extensions activated/deactivated; Re-scan to pick up new providers ---
   context.subscriptions.push(
     vscode.extensions.onDidChange(() => {
-      if (!config.enable) {
+      if (config.enable.length === 0) {
         return;
       }
 
@@ -292,17 +294,26 @@ export function activate(context: vscode.ExtensionContext): void {
   const twWatcher = vscode.workspace.createFileSystemWatcher('**/tailwind.config.{js,ts,cjs,mjs}');
   context.subscriptions.push(
     twWatcher.onDidChange(async () => {
+      if (config.enable.length === 0) {
+        return;
+      }
       await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
       clearCache();
       scanAllVisible(config);
     }),
     twWatcher.onDidCreate(async () => {
+      if (config.enable.length === 0) {
+        return;
+      }
       await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
       clearCache();
       scanAllVisible(config);
     }),
     twWatcher.onDidDelete((uri) => {
       clearVariablesForUri(uri.toString());
+      if (config.enable.length === 0) {
+        return;
+      }
       clearCache();
       scanAllVisible(config);
     }),
