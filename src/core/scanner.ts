@@ -28,6 +28,34 @@ const scanTokens = new Map<string, number>();
 // -------------------------------------- INTERNALS --------------------------------------
 
 /**
+ * Build the VS Code range for a match, honoring the `dot-before` marker offset.
+ */
+function toRange(
+  doc: vscode.TextDocument,
+  match: ColorMatch,
+  markerType: DocumentResolvedConfig['markerType']
+): vscode.Range {
+  const startOffset =
+    markerType === 'dot-before' && match.fullStartOffset !== undefined
+      ? match.fullStartOffset
+      : match.startOffset;
+  return new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
+}
+
+/**
+ * Keep only error and warning diagnostics for the given document.
+ */
+function getActiveDiagnostics(uri: vscode.Uri): vscode.Diagnostic[] {
+  return vscode.languages
+    .getDiagnostics(uri)
+    .filter(
+      (diagnostic) =>
+        diagnostic.severity === vscode.DiagnosticSeverity.Error ||
+        diagnostic.severity === vscode.DiagnosticSeverity.Warning
+    );
+}
+
+/**
  * Merge regex-based matches with provider matches.
  * Provider results take priority (they come from language servers with semantic understanding).
  * Regex results are only added when they don't overlap with any provider result.
@@ -46,12 +74,7 @@ function mergeMatches(
   // Convert to VS Code ranges.
   const results: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of merged) {
-    const startOffset =
-      config.markerType === 'dot-before' && match.fullStartOffset !== undefined
-        ? match.fullStartOffset
-        : match.startOffset;
-    const range = new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
-    results.push({ color: match.color, range });
+    results.push({ color: match.color, range: toRange(doc, match, config.markerType) });
   }
 
   return results;
@@ -138,37 +161,28 @@ export async function scanEditor(
     return;
   }
 
-  // [1] Determine the scan range (entire document).
+  // [2] Determine the scan range (entire document).
   const text = doc.getText();
   // Safeguard: Do not scan massive minified files to prevent extension host freezing.
   if (text.length === 0 || text.length > 500_000) {
     return;
   }
 
-  // [2] Regex-based extraction.
+  // [3] Regex-based extraction.
   const beforeVars = getVariablesForUri(uri);
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
   const afterVars = getVariablesForUri(uri);
-  const allDiagnostics = vscode.languages.getDiagnostics(doc.uri);
-  const activeDiagnostics = allDiagnostics.filter(
-    (diagnostic) =>
-      diagnostic.severity === vscode.DiagnosticSeverity.Error ||
-      diagnostic.severity === vscode.DiagnosticSeverity.Warning
-  );
+  const activeDiagnostics = getActiveDiagnostics(doc.uri);
 
   if (!areVariablesEqual(beforeVars, afterVars)) {
     invalidateOtherVisibleEditors(uri, config);
   }
 
-  // [2.5] Immediately apply fast regex matches for zero-latency feedback.
+  // [3.5] Immediately apply fast regex matches for zero-latency feedback.
   const fastResults: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of regexMatches) {
-    const startOffset =
-      docConfig.markerType === 'dot-before' && match.fullStartOffset !== undefined
-        ? match.fullStartOffset
-        : match.startOffset;
-    const range = new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
+    const range = toRange(doc, match, docConfig.markerType);
     if (!hasDiagnosticOverlap(range, activeDiagnostics)) {
       fastResults.push({ color: match.color, range });
     }
@@ -178,7 +192,7 @@ export async function scanEditor(
   cache.set(uri, { results: fastResults, version });
   applyDecorations(editor, fastResults, docConfig);
 
-  // [3] `DocumentColorProvider` bridge (async, non-blocking).
+  // [4] `DocumentColorProvider` bridge (async, non-blocking).
   // We do not await this so the initial regex colors render instantly.
   getProviderColors(doc, docConfig)
     .then((providerMatches) => {
@@ -189,25 +203,19 @@ export async function scanEditor(
 
       // Re-fetch diagnostics to ensure we have the latest ones, preventing
       // race conditions where diagnostics arrive while we were awaiting the provider.
-      const latestDiagnostics = vscode.languages
-        .getDiagnostics(doc.uri)
-        .filter(
-          (diagnostic) =>
-            diagnostic.severity === vscode.DiagnosticSeverity.Error ||
-            diagnostic.severity === vscode.DiagnosticSeverity.Warning
-        );
+      const latestDiagnostics = getActiveDiagnostics(doc.uri);
 
-      // [4] Merge & deduplicate.
+      // [5] Merge & deduplicate.
       const merged = mergeMatches(regexMatches, providerMatches, { config: docConfig, doc });
 
       const filteredMerged = merged.filter(
         (m) => !hasDiagnosticOverlap(m.range, latestDiagnostics)
       );
 
-      // [5] Cache full results.
+      // [6] Cache full results.
       cache.set(uri, { results: filteredMerged, version });
 
-      // [6] Apply updated decorations to all visible editors for this document.
+      // [7] Apply updated decorations to all visible editors for this document.
       for (const visibleEditor of vscode.window.visibleTextEditors) {
         if (visibleEditor.document === doc) {
           applyDecorations(visibleEditor, filteredMerged, docConfig);

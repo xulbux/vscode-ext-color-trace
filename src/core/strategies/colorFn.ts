@@ -1,5 +1,16 @@
 import type { ColorData, ColorParsingStrategy } from '@/types';
-import { ALPHA, NUM, clampAlpha, clampChannel, parseAlpha, parsePercent } from '@/utils/strategy';
+import {
+  ALPHA,
+  NUM,
+  clampAlpha,
+  clampChannel,
+  parseAlpha,
+  parsePercent,
+  removeCssAlpha,
+} from '@/utils/strategy';
+
+/** Splits `color()` tokens on whitespace and slashes. */
+const COLOR_FN_SPLIT_RX = /[\s/]+/;
 
 export const colorFnStrategy: ColorParsingStrategy = {
   /**
@@ -10,7 +21,7 @@ export const colorFnStrategy: ColorParsingStrategy = {
       return undefined;
     }
     const inner = matchText.slice(matchText.indexOf('(') + 1, matchText.lastIndexOf(')')).trim();
-    const parts = inner.split(/[\s/]+/).filter(Boolean);
+    const parts = inner.split(COLOR_FN_SPLIT_RX).filter(Boolean);
     if (parts.length < 4) {
       return undefined;
     }
@@ -30,11 +41,7 @@ export const colorFnStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
-    return {
-      css: matchText,
-      opaqueCss: matchText.replace(/\s*\/\s*[\d.%]+/, ''),
-      rgba: { a, b, g, r },
-    };
+    return { css: matchText, opaqueCss: removeCssAlpha(matchText), rgba: { a, b, g, r } };
   },
   id: 'color-fn',
   pattern: String.raw`color\(\s*(?:srgb|srgb-linear|display-p3|a98-rgb|prophoto-rgb|rec2020|xyz(?:-d50|-d65)?)\s+${NUM}\s+${NUM}\s+${NUM}(?:\s*[/]\s*${ALPHA})?\s*\)`,

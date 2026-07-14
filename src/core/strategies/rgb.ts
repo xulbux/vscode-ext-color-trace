@@ -6,13 +6,14 @@ import {
   NUM_NO_PERCENT,
   BOUNDARY_START,
   BOUNDARY_END,
+  RAW_TOKEN_SPLIT_RX,
   clampAlpha,
   clampChannel,
   parseAlpha,
   parseChannel,
   parseColorTokens,
 } from '@/utils/strategy';
-import { parseHex } from './hex';
+import { HEX_DIGITS_RX, parseHex } from './hex';
 
 export const rgbStrategy: ColorParsingStrategy = {
   /**
@@ -36,7 +37,7 @@ export const rgbStrategy: ColorParsingStrategy = {
       if (!options?.matchRgbWithNoFunction) {
         return undefined;
       }
-      const tokens = matchText.split(/[\s,/]+/).filter(Boolean);
+      const tokens = matchText.split(RAW_TOKEN_SPLIT_RX).filter(Boolean);
       if (tokens.length < 3) {
         return undefined;
       }
@@ -67,7 +68,7 @@ export const rgbStrategy: ColorParsingStrategy = {
       const [hexStr] = tokens;
       const hexLen = hexStr.length;
       if (hexLen === 3 || hexLen === 4 || hexLen === 6 || hexLen === 8) {
-        if (/^[0-9A-F]+$/i.test(hexStr)) {
+        if (HEX_DIGITS_RX.test(hexStr)) {
           const rgba = parseHex(hexStr, options?.useARGB);
           if (rgba) {
             // Return a valid CSS hex string so the browser rendering engine doesn't reject it.

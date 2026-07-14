@@ -23,8 +23,7 @@ function defaultBackgroundForThemeKind(): string {
  * Return a hex color string for the editor background.
  *
  * 1.  Workspace `workbench.colorCustomizations` → `editor.background`
- * 2.  User-level `colorTracr.editorBackground`
- * 3.  Inferred from the active color theme kind.
+ * 2.  Inferred from the active color theme kind.
  */
 function getEditorBackgroundHex(): string {
   // Try workspace color customizations.
@@ -41,7 +40,7 @@ function getEditorBackgroundHex(): string {
 }
 
 /**
- * Resolve the editor background through the three-step fallback chain.
+ * Resolve the editor background through the fallback chain.
  */
 export function resolveEditorBackground(): RGBA {
   const hex = getEditorBackgroundHex();
@@ -55,8 +54,7 @@ export function resolveEditorBackground(): RGBA {
  *
  * Background resolution order:
  * 1.  `workbench.colorCustomizations["editor.background"]` (workspace)
- * 2.  `colorTracr.editorBackground` (user setting)
- * 3.  Auto-detect from the active color theme kind.
+ * 2.  Auto-detect from the active color theme kind.
  */
 let cachedConfig: ExtensionConfig | undefined = undefined;
 let cachedEditorBackground: RGBA | undefined = undefined;

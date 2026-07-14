@@ -5,10 +5,16 @@
  * Each match is converted to a `ColorData` object for downstream use.
  */
 
-import { MIXED_CSS_LANGUAGES, NAMED_COLORS, PURE_CSS_LANGUAGES } from '@/consts/namedColors';
+import {
+  MIXED_CSS_LANGUAGES,
+  NAMED_COLORS,
+  PURE_CSS_LANGUAGES,
+  WORD_RX,
+} from '@/consts/namedColors';
 import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
 import { TAILWIND_DEFAULTS } from '@/consts/tailwindColors';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
+import { mergeNonOverlapping } from '@/utils/ranges';
 import { extractWithStrategies, strategies } from './strategies';
 import { getVariable, setVariable } from './variableManager';
 
@@ -42,34 +48,40 @@ function getTailwindDefault(
 
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
-/** Word regex for named color lookup (only valid CSS named colors). */
-const NAMED_COLORS_KEYS = [...NAMED_COLORS.keys()].join('|');
-const WORD_RE = new RegExp(`\\b(?:${NAMED_COLORS_KEYS})\\b`, 'gi');
-
 /** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. Excludes definitions (followed by `:`). */
-const VAR_USE_RE = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+)(?!\s*:))/g;
+const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+)(?!\s*:))/g;
 
 /** Matches Tailwind CSS color utility classes. */
 const TAILWIND_PREFIXES =
   'bg|text|border|ring|fill|stroke|shadow|outline|decoration|accent|caret|divide|placeholder|from|via|to';
-const CLASS_RE = new RegExp(
+const CLASS_RX = new RegExp(
   `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+|\\[[^\\]]+\\])(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
   'g'
 );
 
+/** Characters that invalidate a Tailwind class boundary (letter, digit, `_`, `-`, `.`, `#`). */
+const TW_BOUNDARY_RX = /[a-zA-Z0-9_\-.#]/;
+
+/** Matches block comments, HTML comments (`<!-- -->`), and line comments (`//`). */
+const COMMENT_RX = /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--(?:[^-]|-(?!->))*-->|\/\/.*$/gm;
+
 // --------------------------------------- HELPERS ---------------------------------------
 
-import { mergeNonOverlapping } from '@/utils/ranges';
-
 const regexCache = new Map<string, RegExp>();
+
+/** Strategies paired with their precomputed named-capture-group id (computed once at load). */
+const strategyGroups = strategies.map((strategy) => ({
+  groupId: strategy.id.replace(/-/g, '_'),
+  strategy,
+}));
+
 function getRegex(options: DocumentResolvedConfig): RegExp {
   const key = `${options.matchRgbWithNoFunction}-${options.matchHslWithNoFunction}-${options.matchOklchWithNoFunction}-${options.matchLchWithNoFunction}-${options.useARGB}`;
   let colorRe = regexCache.get(key);
   if (!colorRe) {
     const patterns: string[] = [];
-    for (const strategy of strategies) {
+    for (const { strategy, groupId } of strategyGroups) {
       const pats = strategy.getPatterns ? strategy.getPatterns(options) : [strategy.pattern];
-      const groupId = strategy.id.replace(/-/g, '_');
       patterns.push(`(?<${groupId}>${pats.join('|')})`);
     }
     colorRe = new RegExp(patterns.join('|'), 'gi');
@@ -98,6 +110,29 @@ function isPossibleVariableDef(text: string, index: number): boolean {
     i -= 1;
   }
   return false;
+}
+
+/** Matches a variable definition name immediately preceding a `:` (e.g., `--name:`, `$name:`, `@name:`). */
+const VAR_DEF_RX = /(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/;
+
+/**
+ * Return the variable name being defined at `index` (e.g., `--foo` in `--foo: red`),
+ * or `undefined` if the position is not a real, non-commented variable definition.
+ */
+function getVariableDefName(
+  text: string,
+  index: number,
+  isInsideComment: (i: number) => boolean
+): string | undefined {
+  if (!isPossibleVariableDef(text, index)) {
+    return undefined;
+  }
+  const prefix = text.slice(Math.max(0, index - 100), index);
+  const defMatch = prefix.match(VAR_DEF_RX);
+  if (defMatch?.groups && !isInsideComment(index)) {
+    return defMatch.groups.name;
+  }
+  return undefined;
 }
 
 function generateUsageMatches(
@@ -139,15 +174,12 @@ function resolveAliasesAndUsages(
     return [];
   }
 
-  for (const varMatch of text.matchAll(VAR_USE_RE)) {
+  for (const varMatch of text.matchAll(VAR_USE_RX)) {
     const varName = varMatch.groups?.name1 || varMatch.groups?.name2;
     if (varName) {
-      if (isPossibleVariableDef(text, varMatch.index)) {
-        const prefix = text.slice(Math.max(0, varMatch.index - 100), varMatch.index);
-        const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-        if (defMatch?.groups && !isInsideComment(varMatch.index)) {
-          aliases.push({ source: varName, target: defMatch.groups.name });
-        }
+      const defName = getVariableDefName(text, varMatch.index, isInsideComment);
+      if (defName) {
+        aliases.push({ source: varName, target: defName });
       }
 
       const offset = varMatch.index + varMatch[0].indexOf(varName);
@@ -195,7 +227,7 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
   const prevChar = text[index - 1];
 
   // Invalid boundaries: letter, number, underscore, hyphen, dot (CSS class), hash (CSS ID).
-  return !/[a-zA-Z0-9_\-.#]/.test(prevChar);
+  return !TW_BOUNDARY_RX.test(prevChar);
 }
 
 function extractTailwindClasses(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
@@ -204,7 +236,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
   }
 
   const results: ColorMatch[] = [];
-  for (const classMatch of text.matchAll(CLASS_RE)) {
+  for (const classMatch of text.matchAll(CLASS_RX)) {
     if (isValidTailwindBoundary(text, classMatch.index)) {
       const prefix = classMatch.groups?.prefix;
       const colorName = classMatch.groups?.colorName;
@@ -268,7 +300,7 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
   }
 
   const results: ColorMatch[] = [];
-  for (const wordMatch of text.matchAll(WORD_RE)) {
+  for (const wordMatch of text.matchAll(WORD_RX)) {
     const word = wordMatch[0].toLowerCase();
     const rgb = NAMED_COLORS.get(word);
     if (rgb) {
@@ -330,9 +362,7 @@ export function extractColors(
   function isInsideComment(index: number): boolean {
     if (!commentRanges) {
       commentRanges = [];
-      for (const match of text.matchAll(
-        /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--(?:[^-]|-(?!->))*-->|\/\/.*$/gm
-      )) {
+      for (const match of text.matchAll(COMMENT_RX)) {
         if (!(match[0].startsWith('//') && match.index > 0 && text[match.index - 1] === ':')) {
           commentRanges.push({ end: match.index + match[0].length, start: match.index });
         }
@@ -363,8 +393,7 @@ export function extractColors(
     let colorData: ColorData | undefined = undefined;
     const { groups } = match;
     if (groups) {
-      for (const strategy of strategies) {
-        const groupId = strategy.id.replace(/-/g, '_');
+      for (const { strategy, groupId } of strategyGroups) {
         if (groups[groupId] !== undefined) {
           colorData = strategy.extract(match[0], options);
           break;
@@ -377,13 +406,9 @@ export function extractColors(
     if (colorData) {
       // Check if this color is a variable definition:
       // `--var-name: <color>` or `$var-name: <color>` or `@var-name: <color>`
-
-      if (isPossibleVariableDef(text, match.index)) {
-        const prefix = text.slice(Math.max(0, match.index - 100), match.index);
-        const defMatch = prefix.match(/(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/);
-        if (defMatch?.groups && !isInsideComment(match.index)) {
-          setVariable(defMatch.groups.name, colorData, options.uri ?? '');
-        }
+      const defName = getVariableDefName(text, match.index, isInsideComment);
+      if (defName) {
+        setVariable(defName, colorData, options.uri ?? '');
       }
 
       results.push({
