@@ -30,12 +30,12 @@ function formatDetail(error: unknown): string {
 
 /** Non-critical issue that degrades a feature (e.g., a single file failed to load). */
 export function logWarn(message: string, error?: unknown): void {
-  getChannel().appendLine(`[WARN] ${message}${formatDetail(error)}`);
+  getChannel().appendLine(`[${new Date().toISOString()}][WARN] ${message}${formatDetail(error)}`);
 }
 
 /** A failure that prevents part of the extension from working. */
 export function logError(message: string, error?: unknown): void {
-  getChannel().appendLine(`[ERROR] ${message}${formatDetail(error)}`);
+  getChannel().appendLine(`[${new Date().toISOString()}][ERROR] ${message}${formatDetail(error)}`);
 }
 
 /**
@@ -45,7 +45,7 @@ export function logError(message: string, error?: unknown): void {
  * so the failure is visible without them having to open the log.
  */
 export function logFatal(message: string, error?: unknown): void {
-  getChannel().appendLine(`[FATAL] ${message}${formatDetail(error)}`);
+  getChannel().appendLine(`[${new Date().toISOString()}][FATAL] ${message}${formatDetail(error)}`);
   vscode.window.showErrorMessage(`Color Tracr: ${message}`, 'Show Logs').then(
     (choice) => {
       if (choice === 'Show Logs') {

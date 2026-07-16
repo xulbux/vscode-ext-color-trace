@@ -92,10 +92,25 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 <br>
 <br>
 
+## Troubleshooting 🛠️
+
+If Color Tracr isn't marking colors the way you expect (or isn't working at all), check its log output:
+
+1.  Open the **Output** panel (menu **View → Output**, or `Ctrl(⌘)`+`Shift`+`U`).
+2.  Select **Color Tracr** from the dropdown in the top-right of the panel. **<span style="color:#97F">\*</span>**
+
+Any errors or warnings (e.g., a Tailwind config that failed to load) are reported there.
+
+> **<span style="color:#97F">\*</span>** If Color Tracr does **not** appear in the dropdown, that means nothing went wrong;<br>
+> &nbsp;&nbsp;&nbsp;The channel is only created when there is an error or warning to report.
+
+<br>
+<br>
+
 ## Acknowledgments 🤝
 
 This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
-`Color Tracr` aims to build upon that concept with modern web format support and a high-performance, minimal-footprint architecture.
+Color Tracr aims to build upon that concept with modern web format support and a high-performance, minimal-footprint architecture.
 
 <br>
 <br>
