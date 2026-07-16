@@ -38,7 +38,7 @@ function getTailwindDefault(
     };
     tailwindDefaultCache.set(colorName, colorData);
   } else if (hex && options) {
-    colorData = extractWithStrategies(hex as string, options);
+    colorData = extractWithStrategies(hex, options);
     if (colorData) {
       tailwindDefaultCache.set(colorName, colorData);
     }
@@ -49,7 +49,7 @@ function getTailwindDefault(
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
 /** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. Excludes definitions (followed by `:`). */
-const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+)(?!\s*:))/g;
+const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9_-]+)|(?<name2>[$@][a-zA-Z0-9_-]+)(?!\s*:))/g;
 
 /** Matches Tailwind CSS color utility classes. */
 const TAILWIND_PREFIXES =
@@ -64,6 +64,18 @@ const TW_BOUNDARY_RX = /[a-zA-Z0-9_\-.#]/;
 
 /** Matches block comments, HTML comments (`<!-- -->`), and line comments (`//`). */
 const COMMENT_RX = /\/\*[^*]*\*+(?:[^/*][^*]*\*+)*\/|<!--(?:[^-]|-(?!->))*-->|\/\/.*$/gm;
+
+/**
+ * `<style>…</style>` blocks in mixed-language files; content captured in group `css`.
+ * The `d` flag exposes the group's start/end offsets via `match.indices`.
+ */
+const STYLE_BLOCK_RX = /<style\b[^>]*>(?<css>[\s\S]*?)<\/style>/dgi;
+
+/**
+ * `style="…"`, `:style="…"` and `v-bind:style="…"` attributes; the quoted value
+ * is captured (group `dq` for double quotes, group `sq` for single quotes).
+ */
+const STYLE_ATTR_RX = /\bstyle\s*=\s*(?:"(?<dq>[^"]*)"|'(?<sq>[^']*)')/dgi;
 
 // --------------------------------------- HELPERS ---------------------------------------
 
@@ -95,6 +107,15 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
   return (start > 0 && text[start - 1] === '-') || (end < text.length && text[end] === '-');
 }
 
+/** Resolves a variable name. Falls back to Tailwind default if it starts with `--color-`. */
+function resolveVariable(name: string, options?: DocumentResolvedConfig): ColorData | undefined {
+  let colorData = getVariable(name);
+  if (!colorData && name.startsWith('--color-')) {
+    colorData = getTailwindDefault(name.slice(8), options);
+  }
+  return colorData;
+}
+
 // -------------------------------------- EXTRACTORS -------------------------------------
 
 function isPossibleVariableDef(text: string, index: number): boolean {
@@ -113,7 +134,7 @@ function isPossibleVariableDef(text: string, index: number): boolean {
 }
 
 /** Matches a variable definition name immediately preceding a `:` (e.g., `--name:`, `$name:`, `@name:`). */
-const VAR_DEF_RX = /(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/;
+const VAR_DEF_RX = /(?<name>(?:--|\$|@)[a-zA-Z0-9_-]+)\s*:\s*$/;
 
 /**
  * Return the variable name being defined at `index` (e.g., `--foo` in `--foo: red`),
@@ -141,10 +162,7 @@ function generateUsageMatches(
 ): ColorMatch[] {
   const usageMatches: ColorMatch[] = [];
   for (const usage of varUsages) {
-    let colorData = getVariable(usage.name);
-    if (!colorData && usage.name.startsWith('--color-')) {
-      colorData = getTailwindDefault(usage.name.slice(8), options);
-    }
+    const colorData = resolveVariable(usage.name, options);
     if (colorData) {
       usageMatches.push({
         color: colorData,
@@ -199,10 +217,7 @@ function resolveAliasesAndUsages(
     changed = false;
     for (const alias of aliases) {
       if (!getVariable(alias.target)) {
-        let colorData = getVariable(alias.source);
-        if (!colorData && alias.source.startsWith('--color-')) {
-          colorData = getTailwindDefault(alias.source.slice(8), options);
-        }
+        const colorData = resolveVariable(alias.source, options);
         if (colorData) {
           setVariable(alias.target, colorData, options.uri ?? '');
           changed = true;
@@ -249,7 +264,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           const innerColor = colorName.slice(1, -1);
           colorData = extractWithStrategies(innerColor, options);
         } else {
-          colorData = getVariable(`--color-${colorName}`) || getTailwindDefault(colorName, options);
+          colorData = resolveVariable(`--color-${colorName}`, options);
         }
 
         if (colorData) {
@@ -291,6 +306,50 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
   return results;
 }
 
+/**
+ * Collect the offset ranges of CSS contexts within a mixed-language document:
+ * `<style>…</style>` block contents and `style`/`:style` attribute values.
+ * Returned ranges are non-overlapping and sorted ascending by start offset.
+ */
+function collectCssRegions(text: string): { start: number; end: number }[] {
+  const regions: { start: number; end: number }[] = [];
+
+  for (const match of text.matchAll(STYLE_BLOCK_RX)) {
+    const range = match.indices?.groups?.css;
+    if (range) {
+      regions.push({ end: range[1], start: range[0] });
+    }
+  }
+
+  for (const match of text.matchAll(STYLE_ATTR_RX)) {
+    const range = match.indices?.groups?.dq ?? match.indices?.groups?.sq;
+    if (range) {
+      regions.push({ end: range[1], start: range[0] });
+    }
+  }
+
+  regions.sort((a, b) => a.start - b.start);
+  return regions;
+}
+
+/** Binary-search whether `offset` falls within any sorted, non-overlapping region. */
+function isOffsetInRegions(offset: number, regions: { start: number; end: number }[]): boolean {
+  let lo = 0;
+  let hi = regions.length - 1;
+  while (lo <= hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const region = regions[mid];
+    if (offset < region.start) {
+      hi = mid - 1;
+    } else if (offset >= region.end) {
+      lo = mid + 1;
+    } else {
+      return true;
+    }
+  }
+  return false;
+}
+
 function extractNamedColors(text: string, languageId: string): ColorMatch[] {
   const isPureCss = PURE_CSS_LANGUAGES.has(languageId);
   const isMixedCss = MIXED_CSS_LANGUAGES.has(languageId);
@@ -298,6 +357,10 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
   if (!isPureCss && !isMixedCss) {
     return [];
   }
+
+  // In mixed-language files the whole document is NOT CSS, so named colors must only be matched inside real
+  // CSS contexts (`<style>` blocks and `style`/`:style` attributes); never in class names, scripts, or markup.
+  const cssRegions = isMixedCss ? collectCssRegions(text) : undefined;
 
   const results: ColorMatch[] = [];
   for (const wordMatch of text.matchAll(WORD_RX)) {
@@ -307,10 +370,13 @@ function extractNamedColors(text: string, languageId: string): ColorMatch[] {
       const offset = wordMatch.index;
       const end = offset + wordMatch[0].length;
 
+      // In mixed-language files, only accept matches inside CSS contexts.
+      const inCssContext = !cssRegions || isOffsetInRegions(offset, cssRegions);
+
       // Skip words adjacent to hyphens (e.g., utility classes or variables).
       const isClassFragment = isAdjacentToHyphen(text, offset, end);
 
-      if (!isClassFragment) {
+      if (inCssContext && !isClassFragment) {
         if (rgb === SPECIAL_TRANSPARENT) {
           results.push({
             color: {

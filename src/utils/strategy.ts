@@ -1,3 +1,10 @@
+/**
+ * Shared building blocks for color parsing strategies.
+ *
+ * Provides reusable regex fragments (numbers, hue, alpha, boundaries) and
+ * token parsing/normalization helpers used across the individual strategies.
+ */
+
 /** Numeric value: integer or decimal, optionally a percentage. */
 export const NUM = String.raw`(?:\d+(?:\.\d+)?%?|\.\d+%?|none)`;
 

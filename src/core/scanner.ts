@@ -15,6 +15,7 @@ import type {
   ExtensionConfig,
   DocumentResolvedConfig,
 } from '@/types';
+import { logError, logWarn } from '@/utils/logger';
 import { mergeNonOverlapping } from '@/utils/ranges';
 import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
@@ -108,6 +109,17 @@ export function invalidateCache(uri: string): void {
 }
 
 /**
+ * Drop all per-document scan state for a closed document.
+ *
+ * Unlike `invalidateCache`, this also removes the document's scan token, which must never be reset while
+ * the document is open (guards against races where a stale async provider result overwrites a newer scan).
+ */
+export function disposeDocument(uri: string): void {
+  cache.delete(uri);
+  scanTokens.delete(uri);
+}
+
+/**
  * Clear the entire scan cache.
  */
 export function clearCache(): void {
@@ -122,15 +134,15 @@ export function invalidateOtherVisibleEditors(changedUri: string, config: Extens
     if (visibleEditor.document.uri.toString() !== changedUri) {
       invalidateCache(visibleEditor.document.uri.toString());
       // oxlint-disable-next-line no-use-before-define
-      scanEditor(visibleEditor, config).catch(() => {
-        // Ignore.
+      scanEditor(visibleEditor, config).catch((error) => {
+        logError(`Failed to re-scan editor: ${visibleEditor.document.uri.toString()}`, error);
       });
     }
   }
 }
 
 /**
- * Scan the visible portions of an editor for colors and apply decorations.
+ * Scan an editor's entire document for colors and apply decorations.
  *
  * @param editor   The text editor to scan.
  * @param config   The resolved extension configuration.
@@ -222,7 +234,7 @@ export async function scanEditor(
         }
       }
     })
-    .catch(() => {
-      // Ignore provider errors.
+    .catch((error) => {
+      logWarn(`Color provider bridge failed for: ${uri}`, error);
     });
 }

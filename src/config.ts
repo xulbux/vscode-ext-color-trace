@@ -1,3 +1,10 @@
+/**
+ * Configuration handling.
+ *
+ * Reads and caches the `colorTracr.*` settings, resolves the editor background
+ * color, and derives the per-document configuration for a given language ID.
+ */
+
 import * as vscode from 'vscode';
 import { hexStrategy } from '@/core/strategies/hex';
 import type { DocumentResolvedConfig, ExtensionConfig, RGBA } from '@/types';
@@ -49,13 +56,6 @@ export function resolveEditorBackground(): RGBA {
 
 // -------------------------------------- PUBLIC API -------------------------------------
 
-/**
- * Read all `colorTracr.*` settings and resolve the editor background color.
- *
- * Background resolution order:
- * 1.  `workbench.colorCustomizations["editor.background"]` (workspace)
- * 2.  Auto-detect from the active color theme kind.
- */
 let cachedConfig: ExtensionConfig | undefined = undefined;
 let cachedEditorBackground: RGBA | undefined = undefined;
 
@@ -64,6 +64,7 @@ export function invalidateConfigCache(): void {
   cachedEditorBackground = undefined;
 }
 
+/** Read and cache all `colorTracr.*` settings. */
 export function readConfig(): ExtensionConfig {
   if (cachedConfig) {
     return cachedConfig;

@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import { NAMED_COLORS } from '@/consts/namedColors';
 import { HEX_ARGB_RX, hexStrategy } from '@/core/strategies/hex';
 import type { ColorData, ColorMatch, DocumentResolvedConfig } from '@/types';
+import { logWarn } from '@/utils/logger';
 import { extractTokens } from '@/utils/strategy';
 
 /**
@@ -115,8 +116,9 @@ export async function getProviderColors(
     }
 
     return matches;
-  } catch {
-    // Provider may not be available; Silently return empty.
+  } catch (error) {
+    // Provider is a best-effort enhancement; regex results still apply.
+    logWarn('Document color provider failed; using regex results only.', error);
     return [];
   }
 }
