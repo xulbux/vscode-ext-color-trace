@@ -17,13 +17,14 @@ import {
   scanEditor,
   invalidateOtherVisibleEditors,
 } from '@/core/scanner';
-import { loadTailwindConfigs } from '@/core/tailwindConfig';
+import { clearTailwindConfig, loadTailwindConfigs } from '@/core/tailwindConfig';
 import {
   areVariablesEqual,
   clearVariablesForUri,
   getVariablesForUri,
 } from '@/core/variableManager';
 import type { ExtensionConfig } from '@/types';
+import { logError, logWarn, logFatal, disposeLogger } from '@/utils/logger';
 
 // ---------------------------------------- STATE ----------------------------------------
 
@@ -40,8 +41,8 @@ let diagTimer: ReturnType<typeof setTimeout> | undefined = undefined;
 // -------------------------------------- ACTIVATION -------------------------------------
 
 function triggerScan(editor: vscode.TextEditor, config: ExtensionConfig): void {
-  scanEditor(editor, config).catch(() => {
-    // Ignore scan errors to satisfy no-console.
+  scanEditor(editor, config).catch((error) => {
+    logError(`Failed to scan editor: ${editor.document.uri.toString()}`, error);
   });
 }
 
@@ -52,6 +53,15 @@ function scanAllVisible(config: ReturnType<typeof readConfig>): void {
 }
 
 export function activate(context: vscode.ExtensionContext): void {
+  try {
+    // oxlint-disable-next-line no-use-before-define
+    activateInternal(context);
+  } catch (error) {
+    logFatal('Failed to activate; color highlighting is unavailable.', error);
+  }
+}
+
+function activateInternal(context: vscode.ExtensionContext): void {
   let config = readConfig();
 
   // --- Initial scan ---
@@ -62,9 +72,25 @@ export function activate(context: vscode.ExtensionContext): void {
     const excludePattern =
       config.excludePaths.length > 0 ? `{${config.excludePaths.join(',')}}` : undefined;
 
-    // [2] Scan workspace for CSS variables in the background, then re-scan visible editors.
-    vscode.workspace
-      .findFiles('**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}', excludePattern, 500)
+    // [2] Load Tailwind configs independently so custom colors appear promptly,
+    //     regardless of how long the full workspace variable scan takes.
+    loadTailwindConfigs(resolveDocumentConfig(config, 'css'))
+      .then(() => {
+        clearCache();
+        scanAllVisible(config);
+      })
+      .catch((error) => {
+        logError('Failed to load Tailwind configs.', error);
+      });
+
+    // [3] Scan workspace for CSS variables in the background, then re-scan visible editors.
+    Promise.resolve(
+      vscode.workspace.findFiles(
+        '**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}',
+        excludePattern,
+        500
+      )
+    )
       .then(async (uris) => {
         for (let i = 0; i < uris.length; i += 5) {
           const chunk = uris.slice(i, i + 5);
@@ -87,8 +113,8 @@ export function activate(context: vscode.ExtensionContext): void {
                   extractOnly: true,
                   uri: uriStr,
                 });
-              } catch {
-                // Ignore read errors.
+              } catch (error) {
+                logWarn(`Failed to read file during variable scan: ${uri.fsPath}`, error);
               }
             })
           );
@@ -107,13 +133,15 @@ export function activate(context: vscode.ExtensionContext): void {
           ),
           resolveDocumentConfig(config, 'scss')
         );
-        await loadTailwindConfigs(resolveDocumentConfig(config, 'css'));
 
         clearCache();
         scanAllVisible(config);
+      })
+      .catch((error) => {
+        logError('Failed to scan workspace for variables.', error);
       });
 
-    // [3] Re-scan after a short delay so `DocumentColorProviders` have time to initialize.
+    // [4] Re-scan after a short delay so `DocumentColorProviders` have time to initialize.
     setTimeout(() => {
       clearCache();
       scanAllVisible(config);
@@ -310,7 +338,7 @@ export function activate(context: vscode.ExtensionContext): void {
       scanAllVisible(config);
     }),
     twWatcher.onDidDelete((uri) => {
-      clearVariablesForUri(uri.toString());
+      clearTailwindConfig(uri);
       if (config.enable.length === 0) {
         return;
       }
@@ -332,4 +360,5 @@ export function deactivate(): void {
   }
   disposeAll();
   clearCache();
+  disposeLogger();
 }

@@ -15,6 +15,7 @@ import type {
   ExtensionConfig,
   DocumentResolvedConfig,
 } from '@/types';
+import { logError, logWarn } from '@/utils/logger';
 import { mergeNonOverlapping } from '@/utils/ranges';
 import { extractColors } from './colorParser';
 import { applyDecorations } from './decorationManager';
@@ -122,8 +123,8 @@ export function invalidateOtherVisibleEditors(changedUri: string, config: Extens
     if (visibleEditor.document.uri.toString() !== changedUri) {
       invalidateCache(visibleEditor.document.uri.toString());
       // oxlint-disable-next-line no-use-before-define
-      scanEditor(visibleEditor, config).catch(() => {
-        // Ignore.
+      scanEditor(visibleEditor, config).catch((error) => {
+        logError(`Failed to re-scan editor: ${visibleEditor.document.uri.toString()}`, error);
       });
     }
   }
@@ -222,7 +223,7 @@ export async function scanEditor(
         }
       }
     })
-    .catch(() => {
-      // Ignore provider errors.
+    .catch((error) => {
+      logWarn(`Color provider bridge failed for: ${uri}`, error);
     });
 }

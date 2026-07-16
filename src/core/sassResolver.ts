@@ -1,6 +1,7 @@
 import path from 'node:path';
 import * as vscode from 'vscode';
 import type { DocumentResolvedConfig } from '@/types';
+import { logWarn } from '@/utils/logger';
 import { extractColors } from './colorParser';
 
 const IMPORT_RX = /@(?:import|use)\s+['"](?<path>[^'"]+)['"]/g;
@@ -61,8 +62,8 @@ export async function resolveSassImports(uris: vscode.Uri[], config: DocumentRes
           }
         });
         await Promise.all(promises);
-      } catch {
-        // Ignore read errors.
+      } catch (error) {
+        logWarn(`Failed to resolve Sass imports for: ${uri.fsPath}`, error);
       }
     })
   );
