@@ -49,7 +49,7 @@ function getTailwindDefault(
 // ------------------------------------ REGEX PATTERNS -----------------------------------
 
 /** Matches `var(--name)` and also SCSS `$name` and LESS `@name`. Excludes definitions (followed by `:`). */
-const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9-_]+)|(?<name2>[$@][a-zA-Z0-9-_]+)(?!\s*:))/g;
+const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9_-]+)|(?<name2>[$@][a-zA-Z0-9_-]+)(?!\s*:))/g;
 
 /** Matches Tailwind CSS color utility classes. */
 const TAILWIND_PREFIXES =
@@ -107,6 +107,15 @@ function isAdjacentToHyphen(text: string, start: number, end: number): boolean {
   return (start > 0 && text[start - 1] === '-') || (end < text.length && text[end] === '-');
 }
 
+/** Resolves a variable name. Falls back to Tailwind default if it starts with `--color-`. */
+function resolveVariable(name: string, options?: DocumentResolvedConfig): ColorData | undefined {
+  let colorData = getVariable(name);
+  if (!colorData && name.startsWith('--color-')) {
+    colorData = getTailwindDefault(name.slice(8), options);
+  }
+  return colorData;
+}
+
 // -------------------------------------- EXTRACTORS -------------------------------------
 
 function isPossibleVariableDef(text: string, index: number): boolean {
@@ -125,7 +134,7 @@ function isPossibleVariableDef(text: string, index: number): boolean {
 }
 
 /** Matches a variable definition name immediately preceding a `:` (e.g., `--name:`, `$name:`, `@name:`). */
-const VAR_DEF_RX = /(?<name>(?:--|\$|@)[a-zA-Z0-9-_]+)\s*:\s*$/;
+const VAR_DEF_RX = /(?<name>(?:--|\$|@)[a-zA-Z0-9_-]+)\s*:\s*$/;
 
 /**
  * Return the variable name being defined at `index` (e.g., `--foo` in `--foo: red`),
@@ -153,10 +162,7 @@ function generateUsageMatches(
 ): ColorMatch[] {
   const usageMatches: ColorMatch[] = [];
   for (const usage of varUsages) {
-    let colorData = getVariable(usage.name);
-    if (!colorData && usage.name.startsWith('--color-')) {
-      colorData = getTailwindDefault(usage.name.slice(8), options);
-    }
+    const colorData = resolveVariable(usage.name, options);
     if (colorData) {
       usageMatches.push({
         color: colorData,
@@ -211,10 +217,7 @@ function resolveAliasesAndUsages(
     changed = false;
     for (const alias of aliases) {
       if (!getVariable(alias.target)) {
-        let colorData = getVariable(alias.source);
-        if (!colorData && alias.source.startsWith('--color-')) {
-          colorData = getTailwindDefault(alias.source.slice(8), options);
-        }
+        const colorData = resolveVariable(alias.source, options);
         if (colorData) {
           setVariable(alias.target, colorData, options.uri ?? '');
           changed = true;
@@ -261,7 +264,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           const innerColor = colorName.slice(1, -1);
           colorData = extractWithStrategies(innerColor, options);
         } else {
-          colorData = getVariable(`--color-${colorName}`) || getTailwindDefault(colorName, options);
+          colorData = resolveVariable(`--color-${colorName}`, options);
         }
 
         if (colorData) {

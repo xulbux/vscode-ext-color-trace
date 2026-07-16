@@ -146,9 +146,7 @@ function addToCache(key: string, entry: DecorationEntry): void {
       if (v.activeEditors.size === 0) {
         v.type.dispose();
         cache.delete(k);
-        if (cache.size < LRU_CAPACITY) {
-          break;
-        }
+        break;
       }
     }
   }
