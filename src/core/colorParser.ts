@@ -38,7 +38,7 @@ function getTailwindDefault(
     };
     tailwindDefaultCache.set(colorName, colorData);
   } else if (hex && options) {
-    colorData = extractWithStrategies(hex as string, options);
+    colorData = extractWithStrategies(hex, options);
     if (colorData) {
       tailwindDefaultCache.set(colorName, colorData);
     }

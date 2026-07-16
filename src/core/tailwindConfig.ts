@@ -1,3 +1,10 @@
+/**
+ * Tailwind config loading.
+ *
+ * Loads `tailwind.config.{js,ts,cjs,mjs}` files via `jiti`, flattens their custom color palette,
+ * and registers the resolved colors so Tailwind utility classes (e.g., `bg-primary`) can be marked.
+ */
+
 import { createJiti } from 'jiti';
 import * as vscode from 'vscode';
 import type { DocumentResolvedConfig } from '@/types';

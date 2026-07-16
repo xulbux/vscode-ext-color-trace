@@ -1,3 +1,10 @@
+/**
+ * Sass/Less import resolver.
+ *
+ * Follows `@import`/`@use` statements (including `~`/`node_modules` and the SCSS partial `_name` convention)
+ * so variables defined in imported files are extracted and available for workspace-wide resolution.
+ */
+
 import path from 'node:path';
 import * as vscode from 'vscode';
 import type { DocumentResolvedConfig } from '@/types';

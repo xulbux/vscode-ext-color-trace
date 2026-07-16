@@ -4,6 +4,6 @@ import type { TextEditorDecorationType } from 'vscode';
 export interface DecorationEntry {
   /** The VS Code decoration type applied to the editor. */
   type: TextEditorDecorationType;
-  /** Ranges currently applied to each editor (keyed by editor id). */
+  /** IDs of the editors this decoration type is currently applied to. */
   activeEditors: Set<string>;
 }

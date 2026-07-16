@@ -14,6 +14,7 @@ import { resolveSassImports } from '@/core/sassResolver';
 import {
   clearCache,
   invalidateCache,
+  disposeDocument,
   scanEditor,
   invalidateOtherVisibleEditors,
 } from '@/core/scanner';
@@ -222,7 +223,7 @@ function activateInternal(context: vscode.ExtensionContext): void {
   // --- Document closed; Clean up cache ---
   context.subscriptions.push(
     vscode.workspace.onDidCloseTextDocument((doc) => {
-      invalidateCache(doc.uri.toString());
+      disposeDocument(doc.uri.toString());
       changedDocuments.delete(doc);
     })
   );
