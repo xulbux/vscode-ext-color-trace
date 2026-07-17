@@ -1,8 +1,17 @@
 <span id="top" />
 
-# Color Tracr<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img align="right" height="34" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
-
-### Highly performant, ultra-lightweight color marking extension for the editor.
+<div align="center">
+<br><br>
+<a href="https://github.com/xulbux/vscode-ext-color-tracr"><img height="64" src="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/assets/icon.png?raw=true"></a>
+<br><br>
+<h1>
+Color Tracr
+<br><br>
+<a href="https://open-vsx.org/extension/xulbux/color-tracr"><img src="https://img.shields.io/open-vsx/v/xulbux/color-tracr?style=flat&labelColor=404560&color=7075FF"/></a> <a href="https://open-vsx.org/extension/xulbux/color-tracr"><img src="https://img.shields.io/open-vsx/dt/xulbux/color-tracr?style=flat&labelColor=404560&color=7075FF"/></a> <a href="https://github.com/xulbux/vscode-ext-color-tracr/blob/main/LICENSE"><img src="https://img.shields.io/github/license/xulbux/vscode-ext-color-tracr?style=flat&labelColor=405055&color=70E0FF"/></a> <a href="https://github.com/xulbux/vscode-ext-color-tracr/commits"><img src="https://img.shields.io/github/last-commit/xulbux/vscode-ext-color-tracr?style=flat&labelColor=55404A&color=FF608A"/></a> <a href="https://github.com/xulbux/vscode-ext-color-tracr/issues"><img src="https://img.shields.io/github/issues/xulbux/vscode-ext-color-tracr?style=flat&labelColor=55404A&color=FF608A"/></a> <a href="https://github.com/xulbux/vscode-ext-color-tracr/stargazers"><img src="https://img.shields.io/github/stars/xulbux/vscode-ext-color-tracr?label=★&style=flat&labelColor=604055&color=FF9ECA"/></a>
+</h1>
+<h3>Highly performant, ultra-lightweight color marking extension for the editor.</h3>
+<br><br>
+</div>
 
 This VS Code extension provides color marking for various formats, including CSS variables, Tailwind classes, and wide-gamut colors.<br>
 It is built to be fast, lightweight, and resource-efficient, featuring **a fully bundled, hyper-optimized architecture**, so your editor never slows down.
@@ -13,17 +22,23 @@ It is built to be fast, lightweight, and resource-efficient, featuring **a fully
 > <br>
 
 <br>
-
-### **Enjoying this extension? Have suggestions?**
-
-Please consider leaving a review on the [**Visual Studio Marketplace**](https://marketplace.visualstudio.com/items?itemName=xulbux.color-tracr) or giving a ⭐ on [**GitHub**](https://github.com/xulbux/vscode-ext-color-tracr).
-
 <br>
+
+<span id="installation" />
+
+## Installation 📦
+
+Search for **Color Tracr** in the VS Code extensions panel, or install via the command line:
+
+```bash
+ext install xulbux.color-tracr
+```
+
 <br>
 
 <span id="features" />
 
-## Features 📋
+## Features ⚡
 
 <table>
   <thead>
@@ -65,6 +80,25 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 </table>
 
 <br>
+
+<span id="configuration" />
+
+## Configuration ⚙️
+
+Color Tracr is highly customizable. You can adjust the following options in your `settings.json`:
+
+| Setting                      |   Type    |    Default    | Description                                                                    |
+| :--------------------------- | :-------: | :-----------: | :----------------------------------------------------------------------------- |
+| `colorTracr.enable`          |  `array`  |    `["*"]`    | Language IDs where Color Tracr marks colors. Prepend `!` to exclude.           |
+| `colorTracr.markerType`      | `string`  | `"highlight"` | Choose how colors are marked: `"highlight"`, `"dot-before"`, or `"dot-after"`. |
+| `colorTracr.showAlpha`       | `boolean` |    `true`     | Render each marker using the color's parsed transparency.                      |
+| `colorTracr.markNamedColors` | `boolean` |    `true`     | Mark standard CSS named colors (like `red`, `tomato`).                         |
+| `colorTracr.markTailwind`    |  `array`  |    `["*"]`    | Mark Tailwind CSS utility classes (e.g., `bg-red-400`).                        |
+| `colorTracr.markVariables`   |  `array`  |    `["*"]`    | Mark cross-file CSS/SCSS/LESS variables (`var(--name)`).                       |
+| `colorTracr.useARGB`         |  `array`  |     `[]`      | Language IDs to parse 4/8-digit hex codes as ARGB instead of RGBA.             |
+
+(*For advanced settings like matching raw RGB/HSL values without functions, check the extension settings inside VS Code!*)
+
 <br>
 
 <span id="previews" />
@@ -91,6 +125,7 @@ Please consider leaving a review on the [**Visual Studio Marketplace**](https://
 
 <br>
 <br>
+<br>
 
 ## Troubleshooting 🛠️
 
@@ -105,6 +140,11 @@ Any errors or warnings (e.g., a Tailwind config that failed to load) are reporte
 > &nbsp;&nbsp;&nbsp;The channel is only created when there is an error or warning to report.
 
 <br>
+
+## Enjoying this extension? Have suggestions?
+
+Please consider leaving a review on the [**Visual Studio Marketplace**](https://marketplace.visualstudio.com/items?itemName=xulbux.color-tracr) or giving a ⭐ on [**GitHub**](https://github.com/xulbux/vscode-ext-color-tracr).
+
 <br>
 
 ## Acknowledgments 🤝
@@ -112,6 +152,7 @@ Any errors or warnings (e.g., a Tailwind config that failed to load) are reporte
 This extension was heavily inspired by the excellent [color-highlight](https://github.com/iamsergii/vscode-ext-color-highlight) extension by [Sergii Naumov](https://github.com/iamsergii).<br>
 Color Tracr aims to build upon that concept with modern web format support and a high-performance, minimal-footprint architecture.
 
+<br>
 <br>
 <br>
 
