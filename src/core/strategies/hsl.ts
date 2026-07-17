@@ -42,7 +42,7 @@ export const hslStrategy: ColorParsingStrategy = {
     }
 
     const h = parseHue(tokens[0]);
-    const [s, l] = tokens.slice(1, 3).map((t) => parsePercent(t));
+    const [s, l] = tokens.slice(1, 3).map((t) => parsePercent(t, true));
     const a = clampAlpha(parseAlpha(tokens[3]));
 
     if (Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(l) || Number.isNaN(a)) {
@@ -51,9 +51,7 @@ export const hslStrategy: ColorParsingStrategy = {
 
     const [r, g, b] = hslToRgb(h, s, l);
 
-    const cssStr = lower.startsWith('hsl')
-      ? matchText.replace('°', 'deg')
-      : `hsla(${h}, ${s * 100}%, ${l * 100}%, ${a})`;
+    const cssStr = `hsla(${h}, ${s * 100}%, ${l * 100}%, ${a})`;
     const opaqueCss = `hsl(${h}, ${s * 100}%, ${l * 100}%)`;
 
     return { css: cssStr, opaqueCss, rgba: { a, b, g, r } };

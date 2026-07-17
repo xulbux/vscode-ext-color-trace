@@ -24,7 +24,7 @@ export const cmykStrategy: ColorParsingStrategy = {
       return undefined;
     }
 
-    const [c, m, y, k] = tokens.slice(0, 4).map((t) => parsePercent(t));
+    const [c, m, y, k] = tokens.slice(0, 4).map((t) => parsePercent(t, true));
     const a = clampAlpha(parseAlpha(tokens[4]));
 
     if (

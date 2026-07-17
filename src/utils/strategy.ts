@@ -49,15 +49,25 @@ export function parseChannel(token: string): number {
   return Number.parseFloat(token);
 }
 
-/** Parse a percentage token to a 0-1 value. */
-export function parsePercent(token: string): number {
+/**
+ * Parse a percentage token to a 0-1 value.
+ *
+ * @param token           The string token to parse.
+ * @param assumePercent   If true, numbers greater than 1 without a `%` sign
+ *                        will be treated as percentages and divided by 100.
+ */
+export function parsePercent(token: string, assumePercent = false): number {
   if (token === 'none') {
     return 0;
   }
   if (token.endsWith('%')) {
     return Number.parseFloat(token) / 100;
   }
-  return Number.parseFloat(token);
+  const val = Number.parseFloat(token);
+  if (assumePercent && val > 1) {
+    return val / 100;
+  }
+  return val;
 }
 
 /** Parse an alpha token (number 0-1 or percentage). */
