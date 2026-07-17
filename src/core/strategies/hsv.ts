@@ -22,7 +22,7 @@ export const hsvStrategy: ColorParsingStrategy = {
     }
 
     const h = parseHue(tokens[0]);
-    const [s, v] = tokens.slice(1, 3).map((t) => parsePercent(t));
+    const [s, v] = tokens.slice(1, 3).map((t) => parsePercent(t, true));
     const a = clampAlpha(parseAlpha(tokens[3]));
 
     if (Number.isNaN(h) || Number.isNaN(s) || Number.isNaN(v) || Number.isNaN(a)) {

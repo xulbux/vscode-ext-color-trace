@@ -36,8 +36,10 @@ export interface ColorParsingStrategy {
 
 /** A color found in a text document. */
 export interface ColorMatch {
-  /** Optional start offset of the entire class/declaration (useful for dot-before styles). */
+  /** Optional start offset of the entire class/declaration (useful for `dot-before` styles). */
   fullStartOffset?: number;
+  /** Optional end offset of the entire class/declaration (useful for `dot-after` styles). */
+  fullEndOffset?: number;
   /** Start offset within the scanned text. */
   startOffset: number;
   /** End offset within the scanned text (exclusive). */

@@ -21,6 +21,9 @@ export const strategies: ColorParsingStrategy[] = [
   swiftStrategy,
 ];
 
+import { NAMED_COLORS } from '@/consts/namedColors';
+import { SPECIAL_TRANSPARENT } from '@/consts/specialColors';
+
 /**
  * Iterates through all available strategies to extract color data from a string.
  * Used as a fallback when the specific strategy is unknown (e.g., Tailwind arbitrary values).
@@ -35,5 +38,22 @@ export function extractWithStrategies(
       return data;
     }
   }
+
+  const word = matchText.trim().toLowerCase();
+  if (options?.markNamedColors !== false) {
+    const rgb = NAMED_COLORS.get(word);
+    if (rgb) {
+      if (rgb === SPECIAL_TRANSPARENT) {
+        return {
+          css: 'transparent',
+          opaqueCss: 'transparent',
+          rgba: { a: 0, b: 0, g: 0, r: 0 },
+          special: SPECIAL_TRANSPARENT,
+        };
+      }
+      return { css: word, opaqueCss: word, rgba: { a: 1, b: rgb[2], g: rgb[1], r: rgb[0] } };
+    }
+  }
+
   return undefined;
 }

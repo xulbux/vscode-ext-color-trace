@@ -67,14 +67,14 @@ function activateInternal(context: vscode.ExtensionContext): void {
 
   // --- Initial scan ---
   if (config.enable.length > 0) {
-    // [1] Instantly scan visible editors (they might only have local colors).
+    // [1] Instantly scan visible editors (they might only have local colors):
     scanAllVisible(config);
 
     const excludePattern =
       config.excludePaths.length > 0 ? `{${config.excludePaths.join(',')}}` : undefined;
 
     // [2] Load Tailwind configs independently so custom colors appear promptly,
-    //     regardless of how long the full workspace variable scan takes.
+    //     regardless of how long the full workspace variable scan takes:
     loadTailwindConfigs(resolveDocumentConfig(config, 'css'))
       .then(() => {
         clearCache();
@@ -84,13 +84,10 @@ function activateInternal(context: vscode.ExtensionContext): void {
         logError('Failed to load Tailwind configs.', error);
       });
 
-    // [3] Scan workspace for CSS variables in the background, then re-scan visible editors.
+    // [3] Scan workspace for CSS variables in the background, then re-scan visible editors:
+    // We prioritize pure CSS/SCSS files to reduce heavy memory usage from decoding large TS/Vue files at startup.
     Promise.resolve(
-      vscode.workspace.findFiles(
-        '**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}',
-        excludePattern,
-        500
-      )
+      vscode.workspace.findFiles('**/*.{css,scss,less,sass,styl}', excludePattern, 500)
     )
       .then(async (uris) => {
         for (let i = 0; i < uris.length; i += 5) {
@@ -142,7 +139,7 @@ function activateInternal(context: vscode.ExtensionContext): void {
         logError('Failed to scan workspace for variables.', error);
       });
 
-    // [4] Re-scan after a short delay so `DocumentColorProviders` have time to initialize.
+    // [4] Re-scan after a short delay so `DocumentColorProviders` have time to initialize:
     setTimeout(() => {
       clearCache();
       scanAllVisible(config);
@@ -249,23 +246,25 @@ function activateInternal(context: vscode.ExtensionContext): void {
         return;
       }
 
-      let needsScan = false;
+      const affectedEditors = new Set<vscode.TextEditor>();
       for (const uri of event.uris) {
         const uriStr = uri.toString();
         for (const editor of vscode.window.visibleTextEditors) {
           if (editor.document.uri.toString() === uriStr) {
             invalidateCache(uriStr);
-            needsScan = true;
+            affectedEditors.add(editor);
           }
         }
       }
 
-      if (needsScan) {
+      if (affectedEditors.size > 0) {
         if (diagTimer !== undefined) {
           clearTimeout(diagTimer);
         }
         diagTimer = setTimeout(() => {
-          scanAllVisible(config);
+          for (const editor of affectedEditors) {
+            triggerScan(editor, config);
+          }
         }, EDIT_DEBOUNCE);
       }
     })
