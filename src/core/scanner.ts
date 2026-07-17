@@ -155,7 +155,7 @@ export async function scanEditor(
 
   const docConfig = resolveDocumentConfig(config, doc.languageId);
 
-  // [1] Check if this document should be skipped.
+  // [1] Check if this document should be skipped:
   if (!docConfig.enable) {
     return;
   }
@@ -173,14 +173,14 @@ export async function scanEditor(
     return;
   }
 
-  // [2] Determine the scan range (entire document).
+  // [2] Determine the scan range (entire document):
   const text = doc.getText();
   // Safeguard: Do not scan massive minified files to prevent extension host freezing.
   if (text.length === 0 || text.length > 500_000) {
     return;
   }
 
-  // [3] Regex-based extraction.
+  // [3] Regex-based extraction:
   const beforeVars = getVariablesForUri(uri);
   clearVariablesForUri(uri);
   const regexMatches = extractColors(text, doc.languageId, { ...docConfig, uri });
@@ -191,7 +191,7 @@ export async function scanEditor(
     invalidateOtherVisibleEditors(uri, config);
   }
 
-  // [3.5] Immediately apply fast regex matches for zero-latency feedback.
+  // [3.5] Immediately apply fast regex matches for zero-latency feedback:
   const fastResults: { range: vscode.Range; color: ColorData }[] = [];
   for (const match of regexMatches) {
     const range = toRange(doc, match, docConfig.markerType);
@@ -204,7 +204,7 @@ export async function scanEditor(
   cache.set(uri, { results: fastResults, version });
   applyDecorations(editor, fastResults, docConfig);
 
-  // [4] `DocumentColorProvider` bridge (async, non-blocking).
+  // [4] `DocumentColorProvider` bridge (async, non-blocking):
   // We do not await this so the initial regex colors render instantly.
   getProviderColors(doc, docConfig)
     .then((providerMatches) => {
@@ -217,17 +217,17 @@ export async function scanEditor(
       // race conditions where diagnostics arrive while we were awaiting the provider.
       const latestDiagnostics = getActiveDiagnostics(doc.uri);
 
-      // [5] Merge & deduplicate.
+      // [5] Merge & deduplicate:
       const merged = mergeMatches(regexMatches, providerMatches, { config: docConfig, doc });
 
       const filteredMerged = merged.filter(
         (m) => !hasDiagnosticOverlap(m.range, latestDiagnostics)
       );
 
-      // [6] Cache full results.
+      // [6] Cache full results:
       cache.set(uri, { results: filteredMerged, version });
 
-      // [7] Apply updated decorations to all visible editors for this document.
+      // [7] Apply updated decorations to all visible editors for this document:
       for (const visibleEditor of vscode.window.visibleTextEditors) {
         if (visibleEditor.document === doc) {
           applyDecorations(visibleEditor, filteredMerged, docConfig);

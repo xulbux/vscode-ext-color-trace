@@ -7,11 +7,15 @@
   --secondary-color: hsl(281, 100%, 72%);
   --bg-dark: rgb(30, 30, 30);
   --bg-light: rgba(255, 255, 255, 0.9);
+  --white: white;
+  --black: black;
+  --none: transparent;
 
   /* Tailwind v4 style variable definitions */
   --color-brand-red: #ff5a5c;
   --color-brand-blue: #7075ff;
-  --color-transparent-black: rgba(0, 0, 0, 0.5);
+  --color-black-tp: rgba(0, 0, 0, 0.5);
+  --color-coral: coral;
 
   /* Hex */
   --color-hex: #97f;
@@ -89,9 +93,10 @@
 
 .var-usage-test {
   --alias: var(--secondary-color);
-  color: var(--primary-color);
+  color: var(--white);
   caret-color: var(--alias);
   border: 1px solid var(--color-brand-blue);
+  outline-color: var(--none);
   background-color: var(--bg-dark);
 }
 
@@ -110,5 +115,5 @@
 
 .card-shadow {
   @apply shadow-lg border-gray-200;
-  @apply text-indigo-700 bg-white;
+  @apply text-indigo-700 border-[cornflowerblue] bg-white;
 }

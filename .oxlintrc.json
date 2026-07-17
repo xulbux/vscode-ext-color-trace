@@ -18,6 +18,7 @@
     "id-length": "off",
     "import/no-nodejs-modules": ["error", { "allow": ["node:path"] }],
     "import/unambiguous": "off",
+    "max-params": "off",
     "max-statements": "off",
     "no-magic-numbers": "off",
     "no-undefined": "off",
