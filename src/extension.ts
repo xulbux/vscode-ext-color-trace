@@ -85,12 +85,9 @@ function activateInternal(context: vscode.ExtensionContext): void {
       });
 
     // [3] Scan workspace for CSS variables in the background, then re-scan visible editors:
+    // We prioritize pure CSS/SCSS files to reduce heavy memory usage from decoding large TS/Vue files at startup.
     Promise.resolve(
-      vscode.workspace.findFiles(
-        '**/*.{css,scss,less,sass,styl,vue,html,ts,js,jsx,tsx}',
-        excludePattern,
-        500
-      )
+      vscode.workspace.findFiles('**/*.{css,scss,less,sass,styl}', excludePattern, 500)
     )
       .then(async (uris) => {
         for (let i = 0; i < uris.length; i += 5) {
@@ -249,23 +246,25 @@ function activateInternal(context: vscode.ExtensionContext): void {
         return;
       }
 
-      let needsScan = false;
+      const affectedEditors = new Set<vscode.TextEditor>();
       for (const uri of event.uris) {
         const uriStr = uri.toString();
         for (const editor of vscode.window.visibleTextEditors) {
           if (editor.document.uri.toString() === uriStr) {
             invalidateCache(uriStr);
-            needsScan = true;
+            affectedEditors.add(editor);
           }
         }
       }
 
-      if (needsScan) {
+      if (affectedEditors.size > 0) {
         if (diagTimer !== undefined) {
           clearTimeout(diagTimer);
         }
         diagTimer = setTimeout(() => {
-          scanAllVisible(config);
+          for (const editor of affectedEditors) {
+            triggerScan(editor, config);
+          }
         }, EDIT_DEBOUNCE);
       }
     })

@@ -142,7 +142,7 @@
           "default": [
             "*"
           ],
-          "markdownDescription": "Mark Tailwind CSS color utility classes such as `bg-red-500` or `text-primary`, including arbitrary values (`bg-[#0af]`) and opacity modifiers (`bg-red-500/50`).\n\nAccepts a list of language IDs – use `*` for all, or prepend `!` to exclude a language."
+          "markdownDescription": "Mark Tailwind CSS color utility classes such as `bg-red-400` or `text-primary`, including arbitrary values (`bg-[#F66]`) and opacity modifiers (`bg-red-500/50`).\n\nAccepts a list of language IDs – use `*` for all, or prepend `!` to exclude a language."
         },
         "colorTracr.matchRgbWithNoFunction": {
           "type": "array",

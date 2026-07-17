@@ -149,6 +149,9 @@ function getVariableDefName(
     return undefined;
   }
   const prefix = text.slice(Math.max(0, index - 100), index);
+  if (!prefix.includes('--') && !prefix.includes('$') && !prefix.includes('@')) {
+    return undefined;
+  }
   const defMatch = prefix.match(VAR_DEF_RX);
   if (defMatch?.groups && !isInsideComment(index)) {
     return defMatch.groups.name;
@@ -249,13 +252,15 @@ function getTailwindColorData(
   colorName: string,
   options?: DocumentResolvedConfig
 ): ColorData | undefined {
-  if (colorName.startsWith('[') && colorName.endsWith(']')) {
-    const innerColor = colorName.slice(1, -1);
-    return extractWithStrategies(innerColor, options);
-  }
-  if (colorName.startsWith('(--') && colorName.endsWith(')')) {
-    const innerVar = colorName.slice(1, -1);
-    return resolveVariable(innerVar, options);
+  if (
+    (colorName.startsWith('[') && colorName.endsWith(']')) ||
+    (colorName.startsWith('(--') && colorName.endsWith(')'))
+  ) {
+    const inner = colorName.slice(1, -1);
+    if (colorName.startsWith('[')) {
+      return extractWithStrategies(inner, options);
+    }
+    return resolveVariable(inner, options);
   }
   return resolveVariable(`--color-${colorName}`, options);
 }
@@ -301,11 +306,10 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           let end = classMatch.index + classMatch[0].length;
           let originalText = colorName + (alpha || '');
 
-          if (colorName.startsWith('[') && colorName.endsWith(']')) {
-            offset += 1;
-            end = offset + colorName.length - 2;
-            originalText = colorName.slice(1, -1);
-          } else if (colorName.startsWith('(--') && colorName.endsWith(')')) {
+          if (
+            (colorName.startsWith('[') && colorName.endsWith(']')) ||
+            (colorName.startsWith('(--') && colorName.endsWith(')'))
+          ) {
             offset += 1;
             end = offset + colorName.length - 2;
             originalText = colorName.slice(1, -1);
@@ -314,6 +318,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           results.push({
             color: colorData,
             endOffset: end,
+            fullEndOffset: classMatch.index + classMatch[0].length,
             fullStartOffset: classMatch.index,
             originalText,
             startOffset: offset,

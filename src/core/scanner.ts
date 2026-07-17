@@ -40,7 +40,11 @@ function toRange(
     markerType === 'dot-before' && match.fullStartOffset !== undefined
       ? match.fullStartOffset
       : match.startOffset;
-  return new vscode.Range(doc.positionAt(startOffset), doc.positionAt(match.endOffset));
+  const endOffset =
+    markerType === 'dot-after' && match.fullEndOffset !== undefined
+      ? match.fullEndOffset
+      : match.endOffset;
+  return new vscode.Range(doc.positionAt(startOffset), doc.positionAt(endOffset));
 }
 
 /**
@@ -155,13 +159,22 @@ export async function scanEditor(
 
   const docConfig = resolveDocumentConfig(config, doc.languageId);
 
-  // [1] Check if this document should be skipped:
-  if (!docConfig.enable) {
-    return;
-  }
-
   const uri = doc.uri.toString();
   const { version } = doc;
+
+  // [1] Check if this document should be skipped for decorations:
+  if (!docConfig.enable) {
+    // We must still extract variables so cross-file references work!
+    const beforeVars = getVariablesForUri(uri);
+    clearVariablesForUri(uri);
+    extractColors(doc.getText(), doc.languageId, { ...docConfig, extractOnly: true, uri });
+    const afterVars = getVariablesForUri(uri);
+
+    if (!areVariablesEqual(beforeVars, afterVars)) {
+      invalidateOtherVisibleEditors(uri, config);
+    }
+    return;
+  }
 
   const currentToken = (scanTokens.get(uri) ?? 0) + 1;
   scanTokens.set(uri, currentToken);
