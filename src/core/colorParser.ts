@@ -55,7 +55,7 @@ const VAR_USE_RX = /(?:var\(\s*(?<name1>--[a-zA-Z0-9_-]+)|(?<name2>[$@][a-zA-Z0-
 const TAILWIND_PREFIXES =
   'bg|text|border|ring|fill|stroke|shadow|outline|decoration|accent|caret|divide|placeholder|from|via|to';
 const CLASS_RX = new RegExp(
-  `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+|\\[[^\\]]+\\])(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
+  `(?<prefix>(?:[a-zA-Z0-9_\\[\\]-]+:)*(?:${TAILWIND_PREFIXES})-)(?<colorName>[a-zA-Z0-9_-]+|\\[[^\\]]+\\]|\\(--[^)]+\\))(?<alpha>\\/[0-9.]+|\\/\\[[^\\]]+\\])?`,
   'g'
 );
 
@@ -245,6 +245,21 @@ function isValidTailwindBoundary(text: string, index: number): boolean {
   return !TW_BOUNDARY_RX.test(prevChar);
 }
 
+function getTailwindColorData(
+  colorName: string,
+  options?: DocumentResolvedConfig
+): ColorData | undefined {
+  if (colorName.startsWith('[') && colorName.endsWith(']')) {
+    const innerColor = colorName.slice(1, -1);
+    return extractWithStrategies(innerColor, options);
+  }
+  if (colorName.startsWith('(--') && colorName.endsWith(')')) {
+    const innerVar = colorName.slice(1, -1);
+    return resolveVariable(innerVar, options);
+  }
+  return resolveVariable(`--color-${colorName}`, options);
+}
+
 function extractTailwindClasses(text: string, options?: DocumentResolvedConfig): ColorMatch[] {
   if (!text.includes('-')) {
     return [];
@@ -258,14 +273,7 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
       const alpha = classMatch.groups?.alpha;
 
       if (prefix && colorName) {
-        let colorData: ColorData | undefined = undefined;
-
-        if (colorName.startsWith('[') && colorName.endsWith(']')) {
-          const innerColor = colorName.slice(1, -1);
-          colorData = extractWithStrategies(innerColor, options);
-        } else {
-          colorData = resolveVariable(`--color-${colorName}`, options);
-        }
+        let colorData = getTailwindColorData(colorName, options);
 
         if (colorData) {
           if (alpha) {
@@ -294,6 +302,10 @@ function extractTailwindClasses(text: string, options?: DocumentResolvedConfig):
           let originalText = colorName + (alpha || '');
 
           if (colorName.startsWith('[') && colorName.endsWith(']')) {
+            offset += 1;
+            end = offset + colorName.length - 2;
+            originalText = colorName.slice(1, -1);
+          } else if (colorName.startsWith('(--') && colorName.endsWith(')')) {
             offset += 1;
             end = offset + colorName.length - 2;
             originalText = colorName.slice(1, -1);
